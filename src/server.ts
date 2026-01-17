@@ -198,14 +198,12 @@ app.get('/api/files/:id/meta', (req, res) => {
 
 // ============== SSE Test ==============
 
-app.get('/api/test-sse', (req, res) => {
-  console.log('SSE test hit');
+app.get('/api/sse-test', (req, res) => {
+  console.log('SSE TEST HIT');
   res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no');
+  res.setHeader('Cache-Control', 'no-cache');  
   res.flushHeaders();
-  res.write('event: test\ndata: {"hello":"world"}\n\n');
+  res.write('data: hello\n\n');
 });
 
 // ============== MCP Endpoints ==============
