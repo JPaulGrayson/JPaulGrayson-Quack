@@ -25,7 +25,6 @@ function sendSSE(res: Response, event: string, data: any): void {
 // Handle new SSE connection from mcp-remote
 export function handleMCPSSE(req: Request, res: Response): void {
   console.log('🔌 SSE endpoint hit!');
-  res.write('event: ping\ndata: test\n\n');
   
   const connectionId = `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
@@ -38,6 +37,9 @@ export function handleMCPSSE(req: Request, res: Response): void {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders();
+  
+  // Immediate ping to confirm connection
+  res.write('event: ping\ndata: test\n\n');
   
   // Store the connection
   sseConnections.set(connectionId, res);
