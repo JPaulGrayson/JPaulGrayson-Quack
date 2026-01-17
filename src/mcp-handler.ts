@@ -33,6 +33,7 @@ export function handleMCPSSE(req: Request, res: Response): void {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders();
   
   // Store the connection
