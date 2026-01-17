@@ -24,40 +24,29 @@ function sendSSE(res: Response, event: string, data: any): void {
 
 // Handle new SSE connection from mcp-remote
 export function handleMCPSSE(req: Request, res: Response): void {
-  console.log('🔌 SSE endpoint hit!');
+  console.log('SSE ENDPOINT HIT');
   
   const sessionId = `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
-  console.log(`🔌 MCP client connecting: ${sessionId}`);
-  
-  // Set up SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders();
   
-  // Immediate ping to confirm connection
-  res.write('event: ping\ndata: test\n\n');
-  
-  // Store the connection
-  sseConnections.set(sessionId, res);
-  
-  // Send the endpoint URL for mcp-remote to POST messages to
+  // Send endpoint event immediately
   const messageEndpoint = `/api/mcp/message?sessionId=${sessionId}`;
   res.write(`event: endpoint\ndata: ${messageEndpoint}\n\n`);
   
-  // Keep connection alive with periodic pings
+  // Store connection
+  sseConnections.set(sessionId, res);
+  
+  // Keep alive
   const pingInterval = setInterval(() => {
     if (sseConnections.has(sessionId)) {
       res.write(': ping\n\n');
     }
   }, 30000);
   
-  // Handle client disconnect
   req.on('close', () => {
-    console.log(`🔌 MCP client disconnected: ${sessionId}`);
     clearInterval(pingInterval);
     sseConnections.delete(sessionId);
   });
