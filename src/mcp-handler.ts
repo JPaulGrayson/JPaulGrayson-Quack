@@ -13,7 +13,7 @@ import {
 } from './store.js';
 import { SendMessageRequest } from './types.js';
 
-// Store active SSE connections by connectionId
+// Store active SSE connections by sessionId
 const sseConnections: Map<string, Response> = new Map();
 
 // Send SSE event to a specific connection
@@ -26,9 +26,9 @@ function sendSSE(res: Response, event: string, data: any): void {
 export function handleMCPSSE(req: Request, res: Response): void {
   console.log('🔌 SSE endpoint hit!');
   
-  const connectionId = `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const sessionId = `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
-  console.log(`🔌 MCP client connecting: ${connectionId}`);
+  console.log(`🔌 MCP client connecting: ${sessionId}`);
   
   // Set up SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
@@ -42,36 +42,35 @@ export function handleMCPSSE(req: Request, res: Response): void {
   res.write('event: ping\ndata: test\n\n');
   
   // Store the connection
-  sseConnections.set(connectionId, res);
+  sseConnections.set(sessionId, res);
   
   // Send the endpoint URL for mcp-remote to POST messages to
-  sendSSE(res, 'endpoint', {
-    endpoint: `/api/mcp/message?connectionId=${connectionId}`
-  });
+  const messageEndpoint = `/api/mcp/message?sessionId=${sessionId}`;
+  res.write(`event: endpoint\ndata: ${messageEndpoint}\n\n`);
   
   // Keep connection alive with periodic pings
   const pingInterval = setInterval(() => {
-    if (sseConnections.has(connectionId)) {
+    if (sseConnections.has(sessionId)) {
       res.write(': ping\n\n');
     }
   }, 30000);
   
   // Handle client disconnect
   req.on('close', () => {
-    console.log(`🔌 MCP client disconnected: ${connectionId}`);
+    console.log(`🔌 MCP client disconnected: ${sessionId}`);
     clearInterval(pingInterval);
-    sseConnections.delete(connectionId);
+    sseConnections.delete(sessionId);
   });
 }
 
 // Handle incoming MCP JSON-RPC messages
 export function handleMCPMessage(req: Request, res: Response): void {
-  const connectionId = req.query.connectionId as string;
-  const sseRes = sseConnections.get(connectionId);
+  const sessionId = req.query.sessionId as string;
+  const sseRes = sseConnections.get(sessionId);
   
   if (!sseRes) {
-    console.error(`No SSE connection found for: ${connectionId}`);
-    res.status(400).json({ error: 'Invalid connection ID' });
+    console.error(`No SSE connection found for: ${sessionId}`);
+    res.status(400).json({ error: 'Invalid session ID' });
     return;
   }
   
