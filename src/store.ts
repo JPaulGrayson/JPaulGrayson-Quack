@@ -169,6 +169,20 @@ export function getMessage(messageId: string): QuackMessage | null {
   return null;
 }
 
+// Delete a message by ID
+export function deleteMessage(messageId: string): boolean {
+  for (const [inbox, messages] of inboxes) {
+    const index = messages.findIndex(m => m.id === messageId);
+    if (index !== -1) {
+      messages.splice(index, 1);
+      persistStore();
+      console.log(`🗑️ Message ${messageId} deleted`);
+      return true;
+    }
+  }
+  return false;
+}
+
 // Get all inboxes (for UI)
 export function getAllInboxes(): string[] {
   return Array.from(inboxes.keys());

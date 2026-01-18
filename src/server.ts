@@ -12,6 +12,7 @@ import {
   receiveMessage, 
   completeMessage,
   getMessage,
+  deleteMessage,
   getAllInboxes,
   getStats 
 } from './store.js';
@@ -143,6 +144,17 @@ app.post('/api/complete/:id', (req, res) => {
     success: true,
     message,
   });
+});
+
+// Delete message
+app.delete('/api/message/:id', (req, res) => {
+  const deleted = deleteMessage(req.params.id);
+  
+  if (!deleted) {
+    return res.status(404).json({ error: 'Message not found' });
+  }
+  
+  res.json({ success: true });
 });
 
 // Get all inboxes
