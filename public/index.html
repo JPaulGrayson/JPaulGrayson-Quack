@@ -269,6 +269,15 @@
       background: rgba(255, 255, 255, 0.2);
     }
 
+    .btn-danger {
+      background: #dc3545;
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
     .empty-state {
       text-align: center;
       padding: 3rem;
@@ -899,6 +908,7 @@ curl <span class="docs-url"></span>/api/inbox/replit</code>
           <div class="message-actions">
             ${message.status === 'pending' ? `<button class="btn btn-primary" onclick="markRead('${message.id}')">Mark as Read</button>` : ''}
             ${message.status === 'read' ? `<button class="btn btn-primary" onclick="markComplete('${message.id}')">Mark Complete</button>` : ''}
+            <button class="btn btn-danger" onclick="deleteMsg('${message.id}')">Delete</button>
             <button class="btn btn-secondary" onclick="closeModal()">Close</button>
           </div>
         `;
@@ -921,6 +931,16 @@ curl <span class="docs-url"></span>/api/inbox/replit</code>
       loadStats();
       loadInboxes();
       closeModal();
+    }
+
+    // Delete message
+    async function deleteMsg(messageId) {
+      if (confirm('Delete this message?')) {
+        await fetch(`${API_BASE}/api/message/${messageId}`, { method: 'DELETE' });
+        loadStats();
+        loadInboxes();
+        closeModal();
+      }
     }
 
     // Close modal
