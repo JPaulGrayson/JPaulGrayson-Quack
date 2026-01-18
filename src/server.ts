@@ -18,6 +18,7 @@ import {
 import { SendMessageRequest } from './types.js';
 import { handleMCPSSE, handleMCPMessage } from './mcp-handler.js';
 import { initFileStore, uploadFile, getFile, getFileMeta } from './file-store.js';
+import { initWebhooks, registerWebhook, removeWebhook, listWebhooks, triggerWebhooks } from './webhooks.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -41,6 +42,7 @@ app.use(express.static('public', {
 // Initialize stores
 initStore();
 initFileStore();
+initWebhooks();
 
 // ============== REST API ==============
 
@@ -73,6 +75,11 @@ app.post('/api/send', (req, res) => {
     // Create message with resolved files
     const messageRequest = { ...request, files };
     const message = sendMessage(messageRequest, request.from || 'api');
+    
+    // Trigger webhooks for this inbox (fire-and-forget with error handling)
+    triggerWebhooks(req.body.to, message).catch(err => {
+      console.error('Webhook trigger error:', err);
+    });
     
     res.json({
       success: true,
@@ -207,6 +214,64 @@ app.get('/api/files/:id/meta', (req, res) => {
   res.json(meta);
 });
 
+// ============== WEBHOOK API ==============
+
+// Register a webhook
+app.post('/api/webhooks', (req, res) => {
+  try {
+    const { inbox, url, secret } = req.body;
+    
+    if (!inbox || !url) {
+      return res.status(400).json({ error: 'Missing required fields: inbox, url' });
+    }
+    
+    let webhook;
+    try {
+      webhook = registerWebhook(inbox, url, secret);
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+    
+    res.json({
+      success: true,
+      webhook: {
+        id: webhook.id,
+        inbox: webhook.inbox,
+        url: webhook.url,
+        createdAt: webhook.createdAt,
+      },
+    });
+  } catch (err) {
+    console.error('Webhook register error:', err);
+    res.status(500).json({ error: 'Failed to register webhook' });
+  }
+});
+
+// List webhooks
+app.get('/api/webhooks', (req, res) => {
+  const webhooks = listWebhooks().map(w => ({
+    id: w.id,
+    inbox: w.inbox,
+    url: w.url,
+    createdAt: w.createdAt,
+    lastTriggered: w.lastTriggered,
+    failCount: w.failCount,
+  }));
+  
+  res.json({ webhooks });
+});
+
+// Delete a webhook
+app.delete('/api/webhooks/:id', (req, res) => {
+  const deleted = removeWebhook(req.params.id);
+  
+  if (!deleted) {
+    return res.status(404).json({ error: 'Webhook not found' });
+  }
+  
+  res.json({ success: true });
+});
+
 // ============== SSE Test ==============
 
 app.get('/api/sse-test', (req, res) => {
@@ -246,6 +311,11 @@ app.listen(PORT, () => {
    Files:
    - POST /api/files        - Upload a file
    - GET  /api/files/:id    - Get file content
+   
+   Webhooks:
+   - POST /api/webhooks     - Register a webhook
+   - GET  /api/webhooks     - List webhooks
+   - DELETE /api/webhooks/:id - Remove webhook
    
    MCP (for Claude Desktop):
    - GET  /api/mcp/sse      - SSE endpoint

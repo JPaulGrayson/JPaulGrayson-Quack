@@ -48,7 +48,42 @@ function persistWebhooks(): void {
   }
 }
 
+function isValidWebhookUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') return false;
+    const hostname = parsed.hostname.toLowerCase();
+    if (hostname === 'localhost' || 
+        hostname === '127.0.0.1' || 
+        hostname === '0.0.0.0' ||
+        hostname === '::1' ||
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.') ||
+        hostname.startsWith('172.16.') ||
+        hostname.startsWith('172.17.') ||
+        hostname.startsWith('172.18.') ||
+        hostname.startsWith('172.19.') ||
+        hostname.startsWith('172.2') ||
+        hostname.startsWith('172.30.') ||
+        hostname.startsWith('172.31.') ||
+        hostname.startsWith('169.254.') ||
+        hostname.startsWith('100.64.') ||
+        hostname.startsWith('fc') ||
+        hostname.startsWith('fd') ||
+        hostname.startsWith('fe80')) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function registerWebhook(inbox: string, url: string, secret?: string): Webhook {
+  if (!isValidWebhookUrl(url)) {
+    throw new Error('Invalid webhook URL: must be a public HTTPS URL');
+  }
+  
   const id = `wh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   const webhook: Webhook = {
