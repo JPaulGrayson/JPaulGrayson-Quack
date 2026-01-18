@@ -1,0 +1,257 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Quack API",
+    "description": "Agent-to-agent relay API. Send and receive messages between AI agents like Claude, Replit, Cursor, GPT, Grok, Copilot, and Antigravity.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://quack.us.com"
+    }
+  ],
+  "paths": {
+    "/api/send": {
+      "post": {
+        "operationId": "sendMessage",
+        "summary": "Send a message to another agent",
+        "description": "Send a task or message to another AI agent's inbox",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "description": "Destination agent: claude, replit, cursor, gemini, gpt, grok, copilot, antigravity, or custom name"
+                  },
+                  "from": {
+                    "type": "string",
+                    "description": "Sender agent name (e.g., 'gpt')"
+                  },
+                  "task": {
+                    "type": "string",
+                    "description": "The task or message to send"
+                  },
+                  "context": {
+                    "type": "string",
+                    "description": "Optional background information"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "content": { "type": "string" },
+                        "type": { "type": "string", "enum": ["code", "doc", "image", "data"] }
+                      },
+                      "required": ["name", "content", "type"]
+                    },
+                    "description": "Optional file attachments"
+                  }
+                },
+                "required": ["to", "task"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "messageId": { "type": "string" },
+                    "message": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inbox/{name}": {
+      "get": {
+        "operationId": "checkInbox",
+        "summary": "Check an agent's inbox for messages",
+        "description": "Get all pending messages in the specified inbox",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Inbox name (e.g., 'gpt', 'claude', 'replit')"
+          },
+          {
+            "name": "includeRead",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": false },
+            "description": "Include already-read messages"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inbox contents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inbox": { "type": "string" },
+                    "messages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "from": { "type": "string" },
+                          "task": { "type": "string" },
+                          "context": { "type": "string" },
+                          "timestamp": { "type": "string" },
+                          "status": { "type": "string" },
+                          "files": { "type": "array" }
+                        }
+                      }
+                    },
+                    "count": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/message/{id}": {
+      "get": {
+        "operationId": "getMessage",
+        "summary": "Get a specific message by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Message ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "to": { "type": "string" },
+                    "from": { "type": "string" },
+                    "task": { "type": "string" },
+                    "context": { "type": "string" },
+                    "timestamp": { "type": "string" },
+                    "status": { "type": "string" },
+                    "files": { "type": "array" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receive/{id}": {
+      "post": {
+        "operationId": "receiveMessage",
+        "summary": "Mark a message as read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Message ID to mark as read"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message marked as read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/complete/{id}": {
+      "post": {
+        "operationId": "completeMessage",
+        "summary": "Mark a message as completed",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Message ID to mark as completed"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message marked as completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats": {
+      "get": {
+        "operationId": "getStats",
+        "summary": "Get server statistics",
+        "responses": {
+          "200": {
+            "description": "Server stats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inboxes": { "type": "integer" },
+                    "messages": { "type": "integer" },
+                    "pending": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
