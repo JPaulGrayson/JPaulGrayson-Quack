@@ -308,6 +308,10 @@ app.get('/', (req, res) => {
   res.sendFile('index.html', { root: 'public' });
 });
 
+app.get('/setup', (req, res) => {
+  res.sendFile('setup.html', { root: 'public' });
+});
+
 // ============== Start Server ==============
 
 app.listen(PORT, () => {
