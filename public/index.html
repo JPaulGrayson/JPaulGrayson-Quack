@@ -588,6 +588,7 @@ GET /api/inbox/your-name to check replies</code>
         document.getElementById('inbox-count').textContent = stats.inboxes;
         document.getElementById('message-count').textContent = stats.messages;
         document.getElementById('pending-count').textContent = stats.pending;
+        updatePendingCount(stats.pending);
       } catch (err) {
         console.error('Failed to load stats:', err);
       }
@@ -871,6 +872,16 @@ GET /api/inbox/your-name to check replies</code>
       }
     }
 
+    let pendingCount = 0;
+    
+    function updateTabTitle() {
+      if (pendingCount > 0) {
+        document.title = `(${pendingCount}) Quack`;
+      } else {
+        document.title = 'Quack';
+      }
+    }
+
     function checkForNewMessages(newCount) {
       if (previousMessageCount !== null && newCount > previousMessageCount) {
         const newMsgCount = newCount - previousMessageCount;
@@ -883,13 +894,13 @@ GET /api/inbox/your-name to check replies</code>
           // Tab is hidden - show browser notification instead
           showBrowserNotification(newMsgCount);
         }
-        
-        // Flash the title to notify user
-        const originalTitle = document.title;
-        document.title = '🦆 NEW MESSAGE!';
-        setTimeout(() => { document.title = originalTitle; }, 3000);
       }
       previousMessageCount = newCount;
+    }
+    
+    function updatePendingCount(count) {
+      pendingCount = count;
+      updateTabTitle();
     }
 
     function showBrowserNotification(count) {
