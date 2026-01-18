@@ -451,10 +451,65 @@
     .code-block code {
       white-space: pre;
     }
+
+    /* Sound permission banner */
+    .sound-permission {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-bottom: 2px solid #ffc107;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      z-index: 1000;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(0); }
+    }
+
+    .sound-permission p {
+      margin: 0;
+      color: #e0e0e0;
+    }
+
+    .sound-permission button {
+      background: #ffc107;
+      color: #1a1a2e;
+      border: none;
+      padding: 0.5rem 1.5rem;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .sound-permission button:hover {
+      transform: scale(1.05);
+    }
+
+    .sound-permission .dismiss {
+      background: transparent;
+      color: #888;
+      padding: 0.5rem;
+    }
   </style>
 </head>
 
 <body>
+  <!-- Sound permission banner -->
+  <div class="sound-permission" id="sound-permission" style="display: none;">
+    <p>🦆 Enable duck sounds for message notifications?</p>
+    <button onclick="enableSounds()">Enable Quacks</button>
+    <button class="dismiss" onclick="dismissSoundBanner()">No thanks</button>
+  </div>
+
   <a href="/setup" class="help-btn" title="Setup Guide">?</a>
   <button class="mute-btn" id="mute-btn" onclick="toggleMute()" title="Toggle sounds">🔊</button>
 
@@ -821,8 +876,46 @@ GET /api/inbox/your-name to check replies</code>
       previousMessageCount = newCount;
     }
 
+    // Sound permission handling
+    let audioUnlocked = localStorage.getItem('quackAudioUnlocked') === 'true';
+    
+    function showSoundBanner() {
+      const banner = document.getElementById('sound-permission');
+      if (banner && !audioUnlocked && localStorage.getItem('quackSoundsDismissed') !== 'true') {
+        banner.style.display = 'flex';
+      }
+    }
+
+    function enableSounds() {
+      // Play a sound to unlock audio
+      const audio = new Audio(`${API_BASE}/api/sounds/send?v=${soundVersion}`);
+      audio.volume = 0.6;
+      audio.play().then(() => {
+        console.log('🦆 Audio unlocked!');
+        audioUnlocked = true;
+        localStorage.setItem('quackAudioUnlocked', 'true');
+        soundEnabled = true;
+        localStorage.setItem('quackSounds', 'enabled');
+        updateMuteButton();
+      }).catch(e => {
+        console.log('🦆 Could not unlock audio:', e.message);
+      });
+      document.getElementById('sound-permission').style.display = 'none';
+    }
+
+    function dismissSoundBanner() {
+      document.getElementById('sound-permission').style.display = 'none';
+      localStorage.setItem('quackSoundsDismissed', 'true');
+      soundEnabled = false;
+      localStorage.setItem('quackSounds', 'muted');
+      updateMuteButton();
+    }
+
     updateMuteButton();
     preloadSounds();
+    
+    // Show sound permission banner if not already granted
+    setTimeout(showSoundBanner, 500);
 
     // Initial load
     loadStats();
