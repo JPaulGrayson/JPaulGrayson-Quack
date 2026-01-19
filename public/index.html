@@ -680,13 +680,27 @@ GET /api/inbox/your-name to check replies</code>
           `;
         } else {
           content.innerHTML = messages.map(m => `
-            <div class="message-preview" style="margin-bottom: 1rem; cursor: pointer;" onclick="openMessage('${m.id}')">
-              <div class="message-from">From: ${m.from} · ${m.status}</div>
-              <div class="message-task">${m.task}</div>
+            <div class="message-row" data-id="${m.id}" style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; transition: background 0.2s;">
+              <div class="message-from">From: ${m.from} · <span class="status-badge status-${m.status}">${m.status.replace('_', ' ')}</span></div>
+              <div class="message-task" style="margin: 0.5rem 0;">${m.task.substring(0, 200)}${m.task.length > 200 ? '...' : ''}</div>
               <div class="message-time">${timeAgo(m.timestamp)}</div>
-              ${m.files.length > 0 ? `<div class="files-list" style="margin-top: 0.5rem;">${m.files.map(f => `<span class="file-tag">${f.name}</span>`).join('')}</div>` : ''}
+              ${m.files && m.files.length > 0 ? `<div class="files-list" style="margin-top: 0.5rem;">${m.files.map(f => `<span class="file-tag">${f.name}</span>`).join('')}</div>` : ''}
             </div>
           `).join('');
+          
+          // Add click handlers after rendering
+          content.querySelectorAll('.message-row').forEach(row => {
+            row.addEventListener('click', () => {
+              const msgId = row.dataset.id;
+              openMessage(msgId);
+            });
+            row.addEventListener('mouseenter', () => {
+              row.style.background = 'rgba(255,255,255,0.1)';
+            });
+            row.addEventListener('mouseleave', () => {
+              row.style.background = 'rgba(255,255,255,0.05)';
+            });
+          });
         }
 
         modal.classList.add('active');
@@ -749,6 +763,7 @@ GET /api/inbox/your-name to check replies</code>
             ${message.status === 'in_progress' ? `<button class="btn btn-danger" onclick="setStatus('${message.id}', 'failed')">Mark Failed</button>` : ''}
             ${message.status === 'read' ? `<button class="btn btn-primary" onclick="markComplete('${message.id}')">Complete</button>` : ''}
             <button class="btn btn-danger" onclick="deleteMsg('${message.id}')">Delete</button>
+            <button class="btn btn-secondary" onclick="openInbox('${message.to}')">Back to Inbox</button>
             <button class="btn btn-secondary" onclick="closeModal()">Close</button>
           </div>
         `;
@@ -1012,8 +1027,9 @@ GET /api/inbox/your-name to check replies</code>
       try {
         const res = await fetch(`${API_BASE}/api/stats`);
         const data = await res.json();
-        previousMessageCount = data.pending;
-        console.log('🦆 Initial pending count:', previousMessageCount);
+        // Track TOTAL messages, not just pending, so we detect all new arrivals
+        previousMessageCount = data.messages;
+        console.log('🦆 Initial message count:', previousMessageCount);
       } catch (e) {}
     }
     
@@ -1021,16 +1037,18 @@ GET /api/inbox/your-name to check replies</code>
     loadStats();
     loadInboxes();
 
-    // Refresh every 12 seconds and check for new messages
+    // Refresh every 8 seconds and check for new messages
     setInterval(async () => {
       try {
         const res = await fetch(`${API_BASE}/api/stats`);
         const data = await res.json();
-        checkForNewMessages(data.pending);
+        // Track TOTAL messages to detect new arrivals regardless of status changes
+        checkForNewMessages(data.messages);
+        updatePendingCount(data.pending);
       } catch (e) {}
       loadStats();
       loadInboxes();
-    }, 12000);
+    }, 8000);
   </script>
 </body>
 
