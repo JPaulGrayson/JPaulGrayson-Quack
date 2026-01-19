@@ -14,12 +14,14 @@ import {
   checkInbox, 
   receiveMessage, 
   completeMessage,
+  approveMessage,
+  updateMessageStatus,
   getMessage,
   deleteMessage,
   getAllInboxes,
   getStats 
 } from './store.js';
-import { SendMessageRequest } from './types.js';
+import { SendMessageRequest, VALID_STATUSES, MessageStatus } from './types.js';
 import { handleMCPSSE, handleMCPMessage } from './mcp-handler.js';
 import { initFileStore, uploadFile, getFile, getFileMeta } from './file-store.js';
 import { initWebhooks, registerWebhook, removeWebhook, listWebhooks, triggerWebhooks } from './webhooks.js';
@@ -101,9 +103,37 @@ app.post('/api/send', (req, res) => {
   }
 });
 
-// Check inbox
+// Check inbox - supports single level (e.g., /api/inbox/claude)
 app.get('/api/inbox/:name', (req, res) => {
   const inbox = req.params.name;
+  const includeRead = req.query.includeRead === 'true';
+  
+  const messages = checkInbox(inbox, includeRead);
+  
+  res.json({
+    inbox,
+    messages,
+    count: messages.length,
+  });
+});
+
+// Check inbox - supports two-level hierarchical paths (e.g., /api/inbox/claude/project-alpha)
+app.get('/api/inbox/:parent/:child', (req, res) => {
+  const inbox = `${req.params.parent}/${req.params.child}`;
+  const includeRead = req.query.includeRead === 'true';
+  
+  const messages = checkInbox(inbox, includeRead);
+  
+  res.json({
+    inbox,
+    messages,
+    count: messages.length,
+  });
+});
+
+// Check inbox - supports three-level hierarchical paths (e.g., /api/inbox/claude/project/subtask)
+app.get('/api/inbox/:parent/:child/:subchild', (req, res) => {
+  const inbox = `${req.params.parent}/${req.params.child}/${req.params.subchild}`;
   const includeRead = req.query.includeRead === 'true';
   
   const messages = checkInbox(inbox, includeRead);
@@ -147,6 +177,77 @@ app.post('/api/complete/:id', (req, res) => {
   if (!message) {
     return res.status(404).json({ error: 'Message not found' });
   }
+  
+  res.json({
+    success: true,
+    message,
+  });
+});
+
+// Approve message (for Orchestrate integration)
+app.post('/api/approve/:id', (req, res) => {
+  const existingMessage = getMessage(req.params.id);
+  
+  if (!existingMessage) {
+    return res.status(404).json({ success: false, error: 'Message not found' });
+  }
+  
+  if (existingMessage.status !== 'pending') {
+    return res.status(400).json({ 
+      success: false, 
+      error: `Message is already ${existingMessage.status}` 
+    });
+  }
+  
+  const message = approveMessage(req.params.id);
+  
+  res.json({
+    success: true,
+    message,
+  });
+});
+
+// Valid status transitions enforcing workflow: pending → approved → in_progress → completed/failed
+const STATUS_TRANSITIONS: Record<string, string[]> = {
+  'pending': ['approved', 'failed'],           // Must be approved first, or can fail (reject)
+  'approved': ['in_progress', 'failed'],       // Start work or fail
+  'in_progress': ['completed', 'failed'],      // Finish or fail
+  'read': ['in_progress'],                     // Legacy: start work from read state
+  'completed': [],                             // Terminal state
+  'failed': ['pending'],                       // Can retry (back to pending for re-approval)
+};
+
+// Update message status (general purpose with transition validation)
+app.post('/api/status/:id', (req, res) => {
+  const { status } = req.body;
+  
+  if (!status) {
+    return res.status(400).json({ success: false, error: 'Missing status field' });
+  }
+  
+  if (!VALID_STATUSES.includes(status as MessageStatus)) {
+    return res.status(400).json({ 
+      success: false, 
+      error: `Invalid status. Valid options: ${VALID_STATUSES.join(', ')}` 
+    });
+  }
+  
+  // Get current message to check transition
+  const existingMessage = getMessage(req.params.id);
+  if (!existingMessage) {
+    return res.status(404).json({ success: false, error: 'Message not found' });
+  }
+  
+  // Validate status transition
+  const allowedTransitions = STATUS_TRANSITIONS[existingMessage.status] || [];
+  if (!allowedTransitions.includes(status)) {
+    return res.status(400).json({ 
+      success: false, 
+      error: `Cannot transition from '${existingMessage.status}' to '${status}'. Allowed: ${allowedTransitions.join(', ') || 'none'}` 
+    });
+  }
+  
+  const message = updateMessageStatus(req.params.id, status as MessageStatus);
   
   res.json({
     success: true,
@@ -435,9 +536,11 @@ app.listen(PORT, () => {
    
    REST API:
    - POST /api/send         - Send a message
-   - GET  /api/inbox/:name  - Check an inbox
+   - GET  /api/inbox/:name  - Check an inbox (supports paths: /claude/project-alpha)
    - POST /api/receive/:id  - Mark message as read
    - POST /api/complete/:id - Mark message as completed
+   - POST /api/approve/:id  - Approve message (for Orchestrate)
+   - POST /api/status/:id   - Update message status
    
    Files:
    - POST /api/files        - Upload a file

@@ -140,6 +140,20 @@
       color: #888;
     }
 
+    .status-badge {
+      padding: 0.2rem 0.5rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .status-pending { background: #ffc107; color: #1a1a2e; }
+    .status-approved { background: #4caf50; color: white; }
+    .status-in_progress { background: #2196f3; color: white; }
+    .status-read { background: #9e9e9e; color: white; }
+    .status-completed { background: #4caf50; color: white; }
+    .status-failed { background: #f44336; color: white; }
+
     .message-preview {
       background: rgba(0, 0, 0, 0.2);
       border-radius: 8px;
@@ -703,7 +717,7 @@ GET /api/inbox/your-name to check replies</code>
           
           <div class="message-detail">
             <div class="message-detail-label">Status</div>
-            <div class="message-detail-value">${message.status}</div>
+            <div class="message-detail-value"><span class="status-badge status-${message.status}">${message.status.replace('_', ' ')}</span></div>
           </div>
           
           <div class="message-detail">
@@ -728,8 +742,12 @@ GET /api/inbox/your-name to check replies</code>
           ` : ''}
           
           <div class="message-actions">
-            ${message.status === 'pending' ? `<button class="btn btn-primary" onclick="markRead('${message.id}')">Mark as Read</button>` : ''}
-            ${message.status === 'read' ? `<button class="btn btn-primary" onclick="markComplete('${message.id}')">Mark Complete</button>` : ''}
+            ${message.status === 'pending' ? `<button class="btn btn-primary" onclick="approveMsg('${message.id}')">Approve</button>` : ''}
+            ${message.status === 'pending' ? `<button class="btn btn-secondary" onclick="markRead('${message.id}')">Mark as Read</button>` : ''}
+            ${message.status === 'approved' ? `<button class="btn btn-primary" onclick="setStatus('${message.id}', 'in_progress')">Start Work</button>` : ''}
+            ${message.status === 'in_progress' ? `<button class="btn btn-primary" onclick="markComplete('${message.id}')">Complete</button>` : ''}
+            ${message.status === 'in_progress' ? `<button class="btn btn-danger" onclick="setStatus('${message.id}', 'failed')">Mark Failed</button>` : ''}
+            ${message.status === 'read' ? `<button class="btn btn-primary" onclick="markComplete('${message.id}')">Complete</button>` : ''}
             <button class="btn btn-danger" onclick="deleteMsg('${message.id}')">Delete</button>
             <button class="btn btn-secondary" onclick="closeModal()">Close</button>
           </div>
@@ -750,6 +768,27 @@ GET /api/inbox/your-name to check replies</code>
     // Mark message as complete
     async function markComplete(messageId) {
       await fetch(`${API_BASE}/api/complete/${messageId}`, { method: 'POST' });
+      loadStats();
+      loadInboxes();
+      closeModal();
+    }
+
+    // Approve message (for Orchestrate workflow)
+    async function approveMsg(messageId) {
+      await fetch(`${API_BASE}/api/approve/${messageId}`, { method: 'POST' });
+      playQuackSound('send');
+      loadStats();
+      loadInboxes();
+      closeModal();
+    }
+
+    // Set message status (general purpose)
+    async function setStatus(messageId, status) {
+      await fetch(`${API_BASE}/api/status/${messageId}`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
       loadStats();
       loadInboxes();
       closeModal();

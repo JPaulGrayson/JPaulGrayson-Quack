@@ -119,6 +119,8 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
 }
 
 // Check inbox for messages
+// By default returns actionable messages (pending, approved, in_progress)
+// Use includeRead=true to also see read/completed/failed messages
 export function checkInbox(inbox: string, includeRead: boolean = false): QuackMessage[] {
   const messages = inboxes.get(inbox.toLowerCase()) || [];
   
@@ -126,7 +128,9 @@ export function checkInbox(inbox: string, includeRead: boolean = false): QuackMe
     return messages;
   }
   
-  return messages.filter(m => m.status === 'pending');
+  // Return all actionable messages (not just pending)
+  const actionableStatuses = ['pending', 'approved', 'in_progress'];
+  return messages.filter(m => actionableStatuses.includes(m.status));
 }
 
 // Get a specific message and mark as read
@@ -152,6 +156,37 @@ export function completeMessage(messageId: string): QuackMessage | null {
       message.status = 'completed';
       persistStore();
       console.log(`✅ Message ${messageId} marked as completed`);
+      return message;
+    }
+  }
+  return null;
+}
+
+// Approve a message (for Orchestrate integration)
+export function approveMessage(messageId: string): QuackMessage | null {
+  for (const [_, messages] of inboxes) {
+    const message = messages.find(m => m.id === messageId);
+    if (message) {
+      if (message.status !== 'pending') {
+        return null; // Can only approve pending messages
+      }
+      message.status = 'approved';
+      persistStore();
+      console.log(`👍 Message ${messageId} approved`);
+      return message;
+    }
+  }
+  return null;
+}
+
+// Update message status (general purpose)
+export function updateMessageStatus(messageId: string, status: MessageStatus): QuackMessage | null {
+  for (const [_, messages] of inboxes) {
+    const message = messages.find(m => m.id === messageId);
+    if (message) {
+      message.status = status;
+      persistStore();
+      console.log(`📝 Message ${messageId} status updated to: ${status}`);
       return message;
     }
   }

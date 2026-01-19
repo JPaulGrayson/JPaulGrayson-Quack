@@ -18,5 +18,39 @@
       ],
       "readAt": "2026-01-18T19:43:43.786Z"
     }
+  ],
+  "test-agent": [
+    {
+      "id": "84d80c50-e210-40ae-a735-44f83b0c6b21",
+      "to": "test-agent",
+      "from": "system",
+      "timestamp": "2026-01-19T16:51:50.464Z",
+      "expiresAt": "2026-01-21T16:51:50.464Z",
+      "status": "pending",
+      "task": "Test transition validation",
+      "files": []
+    },
+    {
+      "id": "9c3c260e-ccc5-40a4-8748-a773ac2009fe",
+      "to": "test-agent",
+      "from": "system",
+      "timestamp": "2026-01-19T16:51:57.648Z",
+      "expiresAt": "2026-01-21T16:51:57.648Z",
+      "status": "pending",
+      "task": "Test transition",
+      "files": []
+    }
+  ],
+  "test-flow": [
+    {
+      "id": "760b7e32-3650-4649-9405-cb1481cdd97a",
+      "to": "test-flow",
+      "from": "system",
+      "timestamp": "2026-01-19T16:52:07.546Z",
+      "expiresAt": "2026-01-21T16:52:07.546Z",
+      "status": "completed",
+      "task": "Test full workflow",
+      "files": []
+    }
   ]
 }

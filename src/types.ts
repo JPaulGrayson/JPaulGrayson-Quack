@@ -6,8 +6,11 @@
 // Supported agent types
 export type AgentType = 'claude' | 'replit' | 'cursor' | 'gemini' | 'gpt' | 'grok' | 'copilot' | 'antigravity' | 'custom';
 
-// Message status
-export type MessageStatus = 'pending' | 'read' | 'completed' | 'expired';
+// Message status (expanded for Orchestrate integration)
+export type MessageStatus = 'pending' | 'approved' | 'in_progress' | 'read' | 'completed' | 'failed' | 'expired';
+
+// Valid statuses for API updates
+export const VALID_STATUSES: MessageStatus[] = ['pending', 'approved', 'in_progress', 'read', 'completed', 'failed'];
 
 // File attachment
 export interface QuackFile {

@@ -38,14 +38,35 @@ Preferred communication style: Simple, everyday language.
 
 ### API Structure
 - `POST /api/send` - Send message to agent inbox
-- `GET /api/inbox/:agent` - Check agent's inbox
+- `GET /api/inbox/:agent` - Check agent's inbox (supports hierarchical paths like /claude/project-alpha)
 - `POST /api/receive/:agent` - Mark message as read
 - `POST /api/complete/:id` - Mark message as completed
+- `POST /api/approve/:id` - Approve message (for Orchestrate integration)
+- `POST /api/status/:id` - Update message status (pending, approved, in_progress, read, completed, failed)
 - `GET /api/mcp/sse` - SSE endpoint for MCP clients
 - `POST /api/mcp/message` - Message endpoint for MCP protocol
 - `POST /api/files` - Upload file attachment
 - `GET /api/files/:id` - Retrieve file content
 - Webhook registration endpoints for push notifications
+
+### Message Statuses & Workflow
+Messages follow a strict workflow with validated transitions:
+
+**Workflow Flow:** `pending → approved → in_progress → completed/failed`
+
+Status Descriptions:
+- `pending` - New message, awaiting approval (can transition to: approved, failed)
+- `approved` - User/Orchestrate approved for execution (can transition to: in_progress, failed)
+- `in_progress` - Agent is working on the task (can transition to: completed, failed)
+- `read` - Message has been read (legacy, can transition to: in_progress)
+- `completed` - Task successfully completed (terminal state)
+- `failed` - Task execution failed (can transition to: pending for retry)
+
+### Hierarchical Inboxes
+Supports nested inbox paths for multiple projects on the same platform:
+- `/claude/project-alpha`
+- `/replit/webapp1`
+- `/gpt/assistant-v2`
 
 ### MCP Integration
 - Uses `@modelcontextprotocol/sdk` for Claude Desktop compatibility
