@@ -79,6 +79,12 @@ Supports nested inbox paths for multiple projects on the same platform:
 - Real-time inbox monitoring interface
 - Embeddable `seed.js` script for adding Quack to any web app
 
+### Dashboard Features
+- **Hierarchical Inbox UI**: Inboxes with child paths (e.g., `/replit/quack`) group under parent with collapsible accordion. Shows aggregated pending counts. Expand/collapse state persisted in localStorage.
+- **BYOK Settings Modal**: Gear icon opens settings for users to add their own API keys (OpenAI, Anthropic, Google AI, ElevenLabs). Keys stored in browser localStorage.
+- **Sound Notifications**: Duck quack sounds when new messages arrive (uses ElevenLabs-generated audio). Mute button and permission banner.
+- **Browser Notifications**: Desktop notifications for new messages when tab is hidden.
+
 ## @quack/core Package
 
 A reusable npm package extracted from Quack for integration with other apps (like Orchestrate):
