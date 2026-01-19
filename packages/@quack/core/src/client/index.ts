@@ -37,11 +37,11 @@ export class QuackClient {
     });
     
     if (!res.ok) {
-      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      const error = await res.json().catch(() => ({ error: 'Unknown error' })) as { error?: string };
       throw new Error(error.error || `HTTP ${res.status}`);
     }
     
-    return res.json();
+    return res.json() as Promise<SendResponse>;
   }
 
   async checkInbox(inbox: string, includeRead: boolean = false): Promise<InboxResponse> {
@@ -51,7 +51,7 @@ export class QuackClient {
     const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     
-    return res.json();
+    return res.json() as Promise<InboxResponse>;
   }
 
   async getMessage(messageId: string): Promise<QuackMessage | null> {
@@ -59,7 +59,7 @@ export class QuackClient {
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     
-    return res.json();
+    return res.json() as Promise<QuackMessage>;
   }
 
   async receive(messageId: string): Promise<QuackMessage | null> {
@@ -69,7 +69,7 @@ export class QuackClient {
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     
-    const data = await res.json();
+    const data = await res.json() as { message: QuackMessage };
     return data.message;
   }
 
@@ -80,7 +80,7 @@ export class QuackClient {
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     
-    const data = await res.json();
+    const data = await res.json() as { message: QuackMessage };
     return data.message;
   }
 
@@ -92,11 +92,11 @@ export class QuackClient {
     });
     if (res.status === 404) return null;
     if (!res.ok) {
-      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      const error = await res.json().catch(() => ({ error: 'Unknown error' })) as { error?: string };
       throw new Error(error.error || `HTTP ${res.status}`);
     }
     
-    const data = await res.json();
+    const data = await res.json() as { message: QuackMessage };
     return data.message;
   }
 
@@ -107,7 +107,7 @@ export class QuackClient {
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     
-    const data = await res.json();
+    const data = await res.json() as { message: QuackMessage };
     return data.message;
   }
 
@@ -118,7 +118,7 @@ export class QuackClient {
     if (res.status === 404) return false;
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     
-    const data = await res.json();
+    const data = await res.json() as { success: boolean };
     return data.success;
   }
 
@@ -126,14 +126,14 @@ export class QuackClient {
     const res = await fetch(`${this.baseUrl}/api/stats`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     
-    return res.json();
+    return res.json() as Promise<QuackStats>;
   }
 
   async getAllInboxes(): Promise<string[]> {
     const res = await fetch(`${this.baseUrl}/api/inboxes`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     
-    const data = await res.json();
+    const data = await res.json() as { inboxes: string[] };
     return data.inboxes;
   }
 }

@@ -1,17 +1,21 @@
 {
-  "name": "workspace",
+  "name": "quack-server",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "echo 'Build complete'",
+    "build": "cd packages/@quack/core && npm run build",
     "start": "npx tsx src/server.ts",
     "dev": "npx tsx watch src/server.ts"
   },
-  "keywords": [],
+  "workspaces": [
+    "packages/@quack/*"
+  ],
+  "keywords": ["quack", "agent", "relay", "mcp"],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Agent-to-agent relay system - Like Twitter but for AI models",
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.31.0",
     "@modelcontextprotocol/sdk": "^1.25.2",
