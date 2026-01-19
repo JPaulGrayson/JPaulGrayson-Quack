@@ -977,7 +977,7 @@ GET /api/inbox/your-name to check replies</code>
       try {
         const res = await fetch(`${API_BASE}/api/stats`);
         const data = await res.json();
-        checkForNewMessages(data.messages);
+        checkForNewMessages(data.pending);
       } catch (e) {}
       loadStats();
       loadInboxes();
