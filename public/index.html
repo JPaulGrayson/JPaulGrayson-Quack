@@ -778,10 +778,88 @@
       color: #888;
       padding: 0.5rem;
     }
+
+    /* Toast notification for new messages */
+    .toast-container {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toast {
+      background: #2a2a4a;
+      border: 2px solid #ffc107;
+      border-radius: 12px;
+      padding: 1rem;
+      max-width: 350px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      animation: slideIn 0.3s ease-out;
+      cursor: pointer;
+    }
+
+    .toast:hover {
+      background: #3a3a5a;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .toast-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .toast-title {
+      color: #ffc107;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .toast-close {
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0;
+    }
+
+    .toast-body {
+      color: #ccc;
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .toast-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .toast-actions .btn {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+    }
   </style>
 </head>
 
 <body>
+  <!-- Toast container for new message notifications -->
+  <div class="toast-container" id="toast-container"></div>
+
   <!-- Sound permission banner -->
   <div class="sound-permission" id="sound-permission" style="display: none;">
     <p>🦆 Enable duck sounds for message notifications?</p>
@@ -1305,15 +1383,6 @@ GET /api/inbox/your-name to check replies</code>
               </div>
               <div class="message-time">${timeAgo(message.timestamp)}</div>
             </div>
-            <div class="message-actions" style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-              ${message.status === 'pending' ? `<button class="btn btn-primary" onclick="approveMsg('${message.id}')">Approve</button>` : ''}
-              ${message.status === 'pending' ? `<button class="btn btn-secondary" onclick="markRead('${message.id}')">Mark Read</button>` : ''}
-              ${message.status === 'approved' ? `<button class="btn btn-primary" onclick="setStatus('${message.id}', 'in_progress')">Start Work</button>` : ''}
-              ${message.status === 'in_progress' ? `<button class="btn btn-primary" onclick="markComplete('${message.id}')">Complete</button>` : ''}
-              ${message.status === 'in_progress' ? `<button class="btn btn-danger" onclick="setStatus('${message.id}', 'failed')">Failed</button>` : ''}
-              ${message.status === 'read' ? `<button class="btn btn-primary" onclick="markComplete('${message.id}')">Complete</button>` : ''}
-              <button class="btn btn-danger" onclick="deleteMsg('${message.id}')">Delete</button>
-            </div>
           </div>
           
           <div class="message-detail">
@@ -1632,20 +1701,97 @@ GET /api/inbox/your-name to check replies</code>
       }
     }
 
-    function checkForNewMessages(newCount) {
+    async function checkForNewMessages(newCount) {
       if (previousMessageCount !== null && newCount > previousMessageCount) {
         const newMsgCount = newCount - previousMessageCount;
         console.log('🦆 New message received! Playing sound...');
         
-        // If tab is visible, play sound
+        // If tab is visible, play sound and show toast
         if (!document.hidden) {
           playQuackSound('receive');
+          // Fetch new pending messages and show toasts
+          await showNewMessageToasts();
         } else {
           // Tab is hidden - show browser notification instead
           showBrowserNotification(newMsgCount);
         }
       }
       previousMessageCount = newCount;
+    }
+
+    // Track shown message IDs to avoid duplicate toasts
+    const shownToastIds = new Set();
+
+    async function showNewMessageToasts() {
+      try {
+        // Fetch all pending messages
+        const res = await fetch(`${API_BASE}/api/inboxes`);
+        const { inboxes } = await res.json();
+        
+        for (const inbox of inboxes) {
+          const inboxRes = await fetch(`${API_BASE}/api/inbox/${inbox}`);
+          const { messages } = await inboxRes.json();
+          
+          for (const msg of messages) {
+            if (msg.status === 'pending' && !shownToastIds.has(msg.id)) {
+              shownToastIds.add(msg.id);
+              showToast(msg);
+            }
+          }
+        }
+      } catch (e) {
+        console.log('Could not fetch new messages for toast:', e);
+      }
+    }
+
+    function showToast(message) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.dataset.id = message.id;
+      
+      const preview = message.task.substring(0, 100) + (message.task.length > 100 ? '...' : '');
+      
+      toast.innerHTML = `
+        <div class="toast-header">
+          <span class="toast-title">🦆 New message from ${message.from}</span>
+          <button class="toast-close" onclick="closeToast(this.parentElement.parentElement)">&times;</button>
+        </div>
+        <div class="toast-body">${preview}</div>
+        <div class="toast-actions">
+          <button class="btn btn-primary" onclick="approveFromToast('${message.id}', this.closest('.toast'))">Approve</button>
+          <button class="btn btn-secondary" onclick="viewFromToast('${message.to}', this.closest('.toast'))">View</button>
+        </div>
+      `;
+      
+      container.appendChild(toast);
+      
+      // Auto-dismiss after 15 seconds
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.remove();
+        }
+      }, 15000);
+    }
+
+    function closeToast(toast) {
+      toast.remove();
+    }
+
+    async function approveFromToast(messageId, toast) {
+      try {
+        await fetch(`${API_BASE}/api/approve/${messageId}`, { method: 'POST' });
+        toast.remove();
+        loadStats();
+        loadInboxes();
+      } catch (e) {
+        console.error('Failed to approve:', e);
+      }
+    }
+
+    function viewFromToast(inbox, toast) {
+      toast.remove();
+      openInbox(inbox);
     }
     
     function updatePendingCount(count) {
