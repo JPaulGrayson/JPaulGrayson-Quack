@@ -1428,6 +1428,17 @@ GET /api/inbox/your-name to check replies</code>
             </div>
           ` : ''}
           
+          ${message.project || message.priority || (message.tags && message.tags.length) ? `
+            <div class="message-detail">
+              <div class="message-detail-label">Metadata</div>
+              <div class="message-detail-value" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                ${message.project ? `<span style="background: #4a5568; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">📁 ${message.project}</span>` : ''}
+                ${message.priority ? `<span style="background: ${message.priority === 'urgent' ? '#e53e3e' : message.priority === 'high' ? '#dd6b20' : message.priority === 'low' ? '#718096' : '#4a5568'}; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${message.priority.toUpperCase()}</span>` : ''}
+                ${message.tags && message.tags.length ? message.tags.map(t => `<span style="background: #2d3748; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">#${t}</span>`).join('') : ''}
+              </div>
+            </div>
+          ` : ''}
+          
           ${message.files.length > 0 ? `
             <div class="message-detail">
               <div class="message-detail-label">Files (${message.files.length})</div>

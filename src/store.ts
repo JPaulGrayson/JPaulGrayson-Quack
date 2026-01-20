@@ -193,13 +193,21 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
   
   const messageId = uuid();
   
+  // Determine if this is agent-to-agent (autonomous) or needs human approval
+  // Conversational agents (human in loop): claude, gpt, gemini, grok, copilot
+  // Autonomous agents: replit, cursor, antigravity, and custom
+  const conversationalAgents = ['claude', 'gpt', 'gemini', 'grok', 'copilot'];
+  const fromPlatform = (fromAgent || req.from || '').replace(/^\/+/, '').split('/')[0].toLowerCase();
+  const toPlatform = req.to.replace(/^\/+/, '').split('/')[0].toLowerCase();
+  const isAutonomous = !conversationalAgents.includes(fromPlatform) && !conversationalAgents.includes(toPlatform);
+  
   const message: QuackMessage = {
     id: messageId,
     to: req.to,
     from: fromAgent || req.from,
     timestamp: now.toISOString(),
     expiresAt: expiresAt.toISOString(),
-    status: 'pending',
+    status: isAutonomous ? 'approved' : 'pending',  // Auto-approve agent-to-agent
     task: req.task,
     context: req.context,
     files: req.files || [],
@@ -228,7 +236,7 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
   inboxes.get(inbox)!.push(message);
   persistStore();
   
-  console.log(`📨 Message ${message.id} sent to /${inbox}${threadId ? ` (thread: ${threadId.substring(0, 8)}...)` : ''}`);
+  console.log(`📨 Message ${message.id} sent to /${inbox}${isAutonomous ? ' (auto-approved)' : ''}${threadId ? ` (thread: ${threadId.substring(0, 8)}...)` : ''}`);
   return message;
 }
 
