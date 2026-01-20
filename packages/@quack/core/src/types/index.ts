@@ -40,6 +40,8 @@ export interface QuackMessage {
   projectName?: string;
   conversationExcerpt?: string;
   replyTo?: string;
+  threadId?: string;
+  replyCount?: number;
 }
 
 export interface SendMessageRequest {
@@ -52,6 +54,7 @@ export interface SendMessageRequest {
   projectName?: string;
   conversationExcerpt?: string;
   replyTo?: string;
+  threadId?: string;
 }
 
 export interface InboxResponse {

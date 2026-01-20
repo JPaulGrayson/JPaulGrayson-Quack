@@ -84,6 +84,34 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
   const now = new Date();
   const expiresAt = new Date(now.getTime() + TTL_HOURS * 60 * 60 * 1000);
   
+  // Handle threading
+  let threadId = req.threadId;
+  let originalMessage: QuackMessage | null = null;
+  
+  if (req.replyTo) {
+    // Find the original message to get/set thread
+    originalMessage = getMessage(req.replyTo);
+    if (originalMessage) {
+      // Use existing threadId or create new one from original message ID
+      threadId = originalMessage.threadId || originalMessage.id;
+      
+      // Update original message with threadId if not set
+      if (!originalMessage.threadId) {
+        originalMessage.threadId = threadId;
+      }
+      
+      // Increment reply count on original
+      originalMessage.replyCount = (originalMessage.replyCount || 0) + 1;
+      
+      // Auto-complete the original message when a reply is received
+      // (only if it's in an actionable state)
+      if (['pending', 'approved', 'in_progress'].includes(originalMessage.status)) {
+        originalMessage.status = 'completed';
+        console.log(`✅ Original message ${originalMessage.id} auto-completed (reply received)`);
+      }
+    }
+  }
+  
   const message: QuackMessage = {
     id: uuid(),
     to: req.to,
@@ -97,6 +125,7 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
     projectName: req.projectName,
     conversationExcerpt: req.conversationExcerpt,
     replyTo: req.replyTo,
+    threadId: threadId,
   };
   
   // Add file sizes if not present
@@ -114,7 +143,7 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
   inboxes.get(inbox)!.push(message);
   persistStore();
   
-  console.log(`📨 Message ${message.id} sent to /${inbox}`);
+  console.log(`📨 Message ${message.id} sent to /${inbox}${threadId ? ` (thread: ${threadId.substring(0, 8)}...)` : ''}`);
   return message;
 }
 
@@ -242,4 +271,59 @@ export function getStats(): { inboxes: number; messages: number; pending: number
     messages,
     pending,
   };
+}
+
+// Get all messages in a thread
+export function getThreadMessages(threadId: string): QuackMessage[] {
+  const threadMessages: QuackMessage[] = [];
+  
+  for (const [_, messages] of inboxes) {
+    for (const msg of messages) {
+      // Include messages that are part of this thread OR are the thread starter
+      if (msg.threadId === threadId || msg.id === threadId) {
+        threadMessages.push(msg);
+      }
+    }
+  }
+  
+  // Sort by timestamp
+  threadMessages.sort((a, b) => 
+    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+  
+  return threadMessages;
+}
+
+// Get all threads (grouped by threadId)
+export function getAllThreads(): { threadId: string; messages: QuackMessage[]; latestTimestamp: string }[] {
+  const threads = new Map<string, QuackMessage[]>();
+  
+  for (const [_, messages] of inboxes) {
+    for (const msg of messages) {
+      const tid = msg.threadId || msg.id;
+      if (!threads.has(tid)) {
+        threads.set(tid, []);
+      }
+      threads.get(tid)!.push(msg);
+    }
+  }
+  
+  // Convert to array and sort each thread's messages
+  const result = Array.from(threads.entries()).map(([threadId, messages]) => {
+    messages.sort((a, b) => 
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    return {
+      threadId,
+      messages,
+      latestTimestamp: messages[messages.length - 1].timestamp,
+    };
+  });
+  
+  // Sort threads by latest message
+  result.sort((a, b) => 
+    new Date(b.latestTimestamp).getTime() - new Date(a.latestTimestamp).getTime()
+  );
+  
+  return result;
 }

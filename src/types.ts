@@ -39,7 +39,11 @@ export interface QuackMessage {
   // Optional metadata
   projectName?: string;
   conversationExcerpt?: string;
+  
+  // Threading
   replyTo?: string;             // message ID this is replying to
+  threadId?: string;            // thread ID linking conversation
+  replyCount?: number;          // number of replies to this message
 }
 
 // API request types
@@ -53,6 +57,7 @@ export interface SendMessageRequest {
   projectName?: string;
   conversationExcerpt?: string;
   replyTo?: string;
+  threadId?: string;            // optional: specify existing thread
 }
 
 export interface InboxResponse {

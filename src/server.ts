@@ -19,7 +19,9 @@ import {
   getMessage,
   deleteMessage,
   getAllInboxes,
-  getStats 
+  getStats,
+  getThreadMessages,
+  getAllThreads
 } from './store.js';
 import { SendMessageRequest, VALID_STATUSES, MessageStatus, QuackMessage } from './types.js';
 import { QuackStore, Dispatcher } from '../packages/@quack/core/dist/index.js';
@@ -299,6 +301,32 @@ app.get('/api/inboxes', (req, res) => {
 // Stats
 app.get('/api/stats', (req, res) => {
   res.json(getStats());
+});
+
+// ============== THREADING ENDPOINTS ==============
+
+// Get all threads
+app.get('/api/threads', (req, res) => {
+  const threads = getAllThreads();
+  res.json({
+    threads,
+    count: threads.length,
+  });
+});
+
+// Get messages in a specific thread
+app.get('/api/thread/:threadId', (req, res) => {
+  const messages = getThreadMessages(req.params.threadId);
+  
+  if (messages.length === 0) {
+    return res.status(404).json({ error: 'Thread not found' });
+  }
+  
+  res.json({
+    threadId: req.params.threadId,
+    messages,
+    count: messages.length,
+  });
 });
 
 // ============== DISPATCHER TASK ENDPOINT ==============

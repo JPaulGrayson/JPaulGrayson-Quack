@@ -248,6 +248,77 @@
       color: #666;
     }
 
+    /* Thread View */
+    .threads {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .thread-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .thread-card:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .thread-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .thread-participants {
+      color: #ffc107;
+      font-weight: 500;
+    }
+
+    .thread-count {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.25rem 0.5rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .thread-messages {
+      border-left: 2px solid rgba(255, 193, 7, 0.3);
+      padding-left: 1rem;
+    }
+
+    .thread-message {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .thread-message:last-child {
+      border-bottom: none;
+    }
+
+    .thread-message-from {
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    .thread-message-task {
+      color: #e0e0e0;
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    .thread-arrow {
+      color: #ffc107;
+      margin: 0 0.25rem;
+    }
+
     /* Settings Button */
     .settings-btn {
       position: fixed;
@@ -744,8 +815,17 @@
       </div>
     </div>
 
+    <div class="view-toggle" style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem;">
+      <button class="btn btn-primary" id="inbox-view-btn" onclick="showInboxView()">📥 Inboxes</button>
+      <button class="btn btn-secondary" id="thread-view-btn" onclick="showThreadView()">💬 Threads</button>
+    </div>
+
     <div class="inboxes" id="inboxes">
       <!-- Inbox cards will be rendered here -->
+    </div>
+
+    <div class="threads" id="threads" style="display: none;">
+      <!-- Thread list will be rendered here -->
     </div>
 
     <div class="setup-section">
@@ -989,6 +1069,142 @@ GET /api/inbox/your-name to check replies</code>
         `;
       } catch (err) {
         console.error('Failed to load inboxes:', err);
+      }
+    }
+
+    // ============== Thread View ==============
+    let currentView = 'inbox';
+
+    function showInboxView() {
+      currentView = 'inbox';
+      document.getElementById('inboxes').style.display = 'grid';
+      document.getElementById('threads').style.display = 'none';
+      document.getElementById('inbox-view-btn').classList.add('btn-primary');
+      document.getElementById('inbox-view-btn').classList.remove('btn-secondary');
+      document.getElementById('thread-view-btn').classList.add('btn-secondary');
+      document.getElementById('thread-view-btn').classList.remove('btn-primary');
+    }
+
+    function showThreadView() {
+      currentView = 'threads';
+      document.getElementById('inboxes').style.display = 'none';
+      document.getElementById('threads').style.display = 'grid';
+      document.getElementById('inbox-view-btn').classList.add('btn-secondary');
+      document.getElementById('inbox-view-btn').classList.remove('btn-primary');
+      document.getElementById('thread-view-btn').classList.add('btn-primary');
+      document.getElementById('thread-view-btn').classList.remove('btn-secondary');
+      loadThreads();
+    }
+
+    async function loadThreads() {
+      try {
+        const res = await fetch(`${API_BASE}/api/threads`);
+        const { threads } = await res.json();
+        
+        const container = document.getElementById('threads');
+        
+        if (threads.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="logo">🦆</div>
+              <p>No conversations yet. Start a thread by sending a message!</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Filter to only show multi-message threads
+        const multiMessageThreads = threads.filter(t => t.messages.length > 1);
+        const singleMessageThreads = threads.filter(t => t.messages.length === 1);
+
+        let html = '';
+
+        // Show multi-message threads first
+        for (const thread of multiMessageThreads) {
+          const participants = [...new Set(thread.messages.flatMap(m => [m.from, m.to]))].join(', ');
+          const firstMsg = thread.messages[0];
+          const lastMsg = thread.messages[thread.messages.length - 1];
+          
+          html += `
+            <div class="thread-card" onclick="openThread('${thread.threadId}')">
+              <div class="thread-header">
+                <span class="thread-participants">${participants}</span>
+                <span class="thread-count">${thread.messages.length} messages</span>
+              </div>
+              <div class="thread-messages">
+                <div class="thread-message">
+                  <div class="thread-message-from">${firstMsg.from} <span class="thread-arrow">→</span> ${firstMsg.to}</div>
+                  <div class="thread-message-task">${firstMsg.task.substring(0, 80)}${firstMsg.task.length > 80 ? '...' : ''}</div>
+                </div>
+                ${thread.messages.length > 2 ? `<div style="color: #666; font-size: 0.85rem; padding: 0.25rem 0;">... ${thread.messages.length - 2} more message${thread.messages.length > 3 ? 's' : ''} ...</div>` : ''}
+                <div class="thread-message">
+                  <div class="thread-message-from">${lastMsg.from} <span class="thread-arrow">→</span> ${lastMsg.to} · <span class="status-badge status-${lastMsg.status}">${lastMsg.status.replace('_', ' ')}</span></div>
+                  <div class="thread-message-task">${lastMsg.task.substring(0, 80)}${lastMsg.task.length > 80 ? '...' : ''}</div>
+                </div>
+              </div>
+              <div class="message-time" style="margin-top: 0.5rem;">${timeAgo(thread.latestTimestamp)}</div>
+            </div>
+          `;
+        }
+
+        // Show a separator if we have both
+        if (multiMessageThreads.length > 0 && singleMessageThreads.length > 0) {
+          html += `<div style="color: #666; text-align: center; padding: 1rem;">Single messages (no replies yet)</div>`;
+        }
+
+        // Show single-message threads
+        for (const thread of singleMessageThreads.slice(0, 5)) {
+          const msg = thread.messages[0];
+          html += `
+            <div class="thread-card" onclick="openMessage('${msg.id}')" style="opacity: 0.7;">
+              <div class="thread-header">
+                <span class="thread-participants">${msg.from} <span class="thread-arrow">→</span> ${msg.to}</span>
+                <span class="status-badge status-${msg.status}">${msg.status.replace('_', ' ')}</span>
+              </div>
+              <div class="thread-message-task" style="margin-top: 0.5rem;">${msg.task.substring(0, 100)}${msg.task.length > 100 ? '...' : ''}</div>
+              <div class="message-time" style="margin-top: 0.5rem;">${timeAgo(msg.timestamp)}</div>
+            </div>
+          `;
+        }
+
+        container.innerHTML = html;
+      } catch (err) {
+        console.error('Failed to load threads:', err);
+      }
+    }
+
+    async function openThread(threadId) {
+      try {
+        const res = await fetch(`${API_BASE}/api/thread/${threadId}`);
+        const { messages } = await res.json();
+
+        const modal = document.getElementById('modal');
+        const content = document.getElementById('modal-content');
+
+        document.querySelector('.modal-title').textContent = 'Conversation';
+
+        content.innerHTML = `
+          <div class="thread-messages" style="border-left: 3px solid rgba(255, 193, 7, 0.5); padding-left: 1rem;">
+            ${messages.map((m, i) => `
+              <div class="thread-message" style="padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span class="thread-message-from" style="color: #ffc107;">${m.from} <span class="thread-arrow">→</span> ${m.to}</span>
+                  <span class="status-badge status-${m.status}">${m.status.replace('_', ' ')}</span>
+                </div>
+                <div class="thread-message-task" style="margin: 0.5rem 0; white-space: pre-wrap;">${m.task}</div>
+                <div class="message-time">${timeAgo(m.timestamp)}</div>
+                ${m.replyCount ? `<div style="color: #4caf50; font-size: 0.8rem;">↳ ${m.replyCount} repl${m.replyCount === 1 ? 'y' : 'ies'}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+          <div class="message-actions" style="margin-top: 1rem;">
+            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+          </div>
+        `;
+
+        modal.classList.add('active');
+      } catch (err) {
+        console.error('Failed to load thread:', err);
       }
     }
 

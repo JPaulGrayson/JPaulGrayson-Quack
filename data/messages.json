@@ -16,7 +16,9 @@
           "size": 32307
         }
       ],
-      "readAt": "2026-01-18T19:43:43.786Z"
+      "readAt": "2026-01-18T19:43:43.786Z",
+      "threadId": "f85e0689-a527-4c2a-b7fc-281320e10ab9",
+      "replyCount": 1
     },
     {
       "id": "d3366e39-0b6c-428a-ba34-5435ee176c50",
@@ -73,6 +75,18 @@
       "status": "in_progress",
       "task": "Test dispatch flow - this should auto-trigger when approved",
       "files": []
+    },
+    {
+      "id": "494e5fa4-0135-49d3-acb0-0cc81b650265",
+      "to": "replit",
+      "from": "claude",
+      "timestamp": "2026-01-20T00:10:35.977Z",
+      "expiresAt": "2026-01-22T00:10:35.977Z",
+      "status": "pending",
+      "task": "Thanks for fixing the bugs! The sound notifications and message clicks work great now.",
+      "files": [],
+      "replyTo": "f85e0689-a527-4c2a-b7fc-281320e10ab9",
+      "threadId": "f85e0689-a527-4c2a-b7fc-281320e10ab9"
     }
   ],
   "replit/quack": [
