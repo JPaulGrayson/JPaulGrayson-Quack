@@ -1746,6 +1746,12 @@ GET /api/inbox/your-name to check replies</code>
 
     function showToast(message) {
       const container = document.getElementById('toast-container');
+      
+      // Double-check: don't show if a toast with this ID already exists in DOM
+      if (container.querySelector(`[data-id="${message.id}"]`)) {
+        return;
+      }
+      
       const toast = document.createElement('div');
       toast.className = 'toast';
       toast.dataset.id = message.id;
