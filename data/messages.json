@@ -112,5 +112,18 @@
       "task": "Another child inbox test on DEV",
       "files": []
     }
+  ],
+  "test": [
+    {
+      "id": "c49e787b-2360-4a7a-9a14-bafa061dd078",
+      "to": "test",
+      "from": "agent1",
+      "timestamp": "2026-01-20T00:12:33.562Z",
+      "expiresAt": "2026-01-22T00:12:33.562Z",
+      "status": "pending",
+      "task": "This is a root message - should get threadId",
+      "files": [],
+      "threadId": "c49e787b-2360-4a7a-9a14-bafa061dd078"
+    }
   ]
 }

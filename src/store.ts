@@ -112,8 +112,10 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
     }
   }
   
+  const messageId = uuid();
+  
   const message: QuackMessage = {
-    id: uuid(),
+    id: messageId,
     to: req.to,
     from: fromAgent || req.from,
     timestamp: now.toISOString(),
@@ -125,7 +127,7 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
     projectName: req.projectName,
     conversationExcerpt: req.conversationExcerpt,
     replyTo: req.replyTo,
-    threadId: threadId,
+    threadId: threadId || messageId,  // Root messages get their own ID as threadId
   };
   
   // Add file sizes if not present
