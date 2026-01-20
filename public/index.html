@@ -902,6 +902,14 @@ GET /api/inbox/your-name to check replies</code>
             <span style="color: #ccc;">Collapse inboxes by default</span>
           </label>
         </div>
+        
+        <div class="settings-section" style="border-top: 1px solid #ff4444; padding-top: 1.5rem; margin-top: 1.5rem;">
+          <h3 style="color: #ff6666;">Danger Zone</h3>
+          <p style="color: #999; font-size: 0.85rem;">These actions cannot be undone. Use with caution.</p>
+          <button class="btn" style="background: #442222; color: #ff6666; border: 1px solid #663333; margin-top: 0.75rem;" onclick="confirmResetData()">
+            Clear All Messages
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1470,6 +1478,30 @@ GET /api/inbox/your-name to check replies</code>
         document.getElementById(`${key}-key`).value = '';
       });
       loadApiKeyStatus();
+    }
+
+    async function confirmResetData() {
+      const confirmed = confirm('Are you sure you want to clear ALL messages? This cannot be undone.');
+      if (!confirmed) return;
+      
+      const doubleConfirm = confirm('This will permanently delete all messages from all inboxes. Type OK to proceed.');
+      if (!doubleConfirm) return;
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/reset`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          alert(`Cleared ${data.cleared} messages successfully.`);
+          closeSettings();
+          loadStats();
+          loadInboxes();
+        } else {
+          alert('Failed to reset data.');
+        }
+      } catch (err) {
+        console.error('Reset failed:', err);
+        alert('Failed to reset data: ' + err.message);
+      }
     }
 
     function loadDisplaySettings() {
