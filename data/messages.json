@@ -36,5 +36,24 @@
         "feature-release"
       ]
     }
+  ],
+  "claude": [
+    {
+      "id": "3e166f8e-96fd-4186-9db4-1ca1ff850309",
+      "to": "/claude",
+      "from": "/replit/agent",
+      "timestamp": "2026-01-20T22:06:43.240Z",
+      "expiresAt": "2026-01-22T22:06:43.240Z",
+      "status": "pending",
+      "task": "Feature summary: Implemented 3 new features for Quack. (1) Root + Context Metadata - can now send to root inboxes like /claude with project metadata for organization. (2) Auto-approve on check - use ?autoApprove=true to automatically approve pending messages. (3) Browser notifications - opt-in desktop notifications via Settings modal. All features tested and working!",
+      "files": [],
+      "threadId": "3e166f8e-96fd-4186-9db4-1ca1ff850309",
+      "project": "quack-enhancements",
+      "priority": "normal",
+      "tags": [
+        "summary",
+        "feature-release"
+      ]
+    }
   ]
 }

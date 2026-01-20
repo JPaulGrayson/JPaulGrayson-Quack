@@ -127,15 +127,24 @@ function normalizeInboxPath(inbox: string): string {
   return inbox.replace(/^\/+/, '').toLowerCase();
 }
 
-// Validate inbox path format (must be platform/application, not just a single name)
-// Top-level identities like "orchestrate" should be "replit/orchestrate" or "claude/orchestrate"
-export function validateInboxPath(to: string): { valid: boolean; error?: string } {
+// Validate inbox path format
+// Root paths like "/claude" are allowed when project metadata is provided
+// Otherwise must be platform/application format like "replit/orchestrate"
+export function validateInboxPath(to: string, hasProjectMetadata: boolean = false): { valid: boolean; error?: string } {
   const parts = to.split('/').filter(p => p.length > 0);
   
-  if (parts.length < 2) {
+  if (parts.length < 1) {
     return { 
       valid: false, 
-      error: `Invalid inbox path "${to}". Messages must be sent to platform/application format (e.g., "replit/orchestrate", "claude/project-alpha"). Got single identifier "${to}" instead.`
+      error: `Invalid inbox path "${to}". Cannot be empty.`
+    };
+  }
+  
+  // Allow single-level paths (root inboxes) when project metadata is provided
+  if (parts.length === 1 && !hasProjectMetadata) {
+    return { 
+      valid: false, 
+      error: `Invalid inbox path "${to}". Messages to root inboxes require project metadata, or use platform/application format (e.g., "replit/orchestrate", "claude/project-alpha").`
     };
   }
   

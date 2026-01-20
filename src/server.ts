@@ -94,12 +94,14 @@ app.post('/api/send', (req, res) => {
       return res.status(400).json({ error: 'Missing required fields: to, task' });
     }
     
-    // Validate inbox path format (must be platform/application)
-    const pathValidation = validateInboxPath(request.to);
+    // Validate inbox path format
+    // Root inboxes (e.g., /claude) are allowed when project metadata is provided
+    const hasProjectMetadata = !!(request.project || request.tags?.length);
+    const pathValidation = validateInboxPath(request.to, hasProjectMetadata);
     if (!pathValidation.valid) {
       return res.status(400).json({ 
         error: pathValidation.error,
-        hint: 'Use format: platform/application (e.g., "replit/orchestrate", "claude/my-project")'
+        hint: hasProjectMetadata ? 'Check inbox path format' : 'Use format: platform/application (e.g., "replit/orchestrate") or include project metadata for root inboxes'
       });
     }
     
