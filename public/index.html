@@ -860,9 +860,9 @@
   <!-- Toast container for new message notifications -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- Sound permission banner -->
+  <!-- Sound permission banner - required for browser audio unlock -->
   <div class="sound-permission" id="sound-permission" style="display: none;">
-    <p>🦆 Enable duck sounds for message notifications?</p>
+    <p>🦆 Click to enable sounds (required by browser)</p>
     <button onclick="enableSounds()">Enable Quacks</button>
     <button class="dismiss" onclick="dismissSoundBanner()">No thanks</button>
   </div>
@@ -1821,7 +1821,9 @@ GET /api/inbox/your-name to check replies</code>
     
     function showSoundBanner() {
       const banner = document.getElementById('sound-permission');
-      if (banner && !audioUnlocked && localStorage.getItem('quackSoundsDismissed') !== 'true') {
+      // Show banner if audio hasn't been unlocked this session AND user hasn't dismissed it
+      if (banner && localStorage.getItem('quackSoundsDismissed') !== 'true') {
+        // Always show on fresh sessions to ensure audio unlock
         banner.style.display = 'flex';
       }
     }
