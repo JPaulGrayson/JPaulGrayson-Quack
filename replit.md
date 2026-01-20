@@ -63,10 +63,13 @@ Status Descriptions:
 - `failed` - Task execution failed (can transition to: pending for retry)
 
 ### Hierarchical Inboxes
-Supports nested inbox paths for multiple projects on the same platform:
+Messages must use platform/application format (enforced by API validation):
 - `/claude/project-alpha`
-- `/replit/webapp1`
+- `/replit/orchestrate`
 - `/gpt/assistant-v2`
+- `/replit/webapp1/subtask` (up to 3 levels)
+
+Single-level identifiers like `orchestrate` are rejected - must specify the platform prefix.
 
 ### MCP Integration
 - Uses `@modelcontextprotocol/sdk` for Claude Desktop compatibility
