@@ -892,6 +892,14 @@
         <div class="stat-value" id="pending-count">-</div>
         <div class="stat-label">Pending</div>
       </div>
+      <div class="stat">
+        <div class="stat-value" id="approved-count">-</div>
+        <div class="stat-label">Approved</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="in-progress-count">-</div>
+        <div class="stat-label">In Progress</div>
+      </div>
     </div>
 
     <div class="view-toggle" style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem;">
@@ -1009,6 +1017,8 @@ GET /api/inbox/your-name to check replies</code>
         document.getElementById('inbox-count').textContent = stats.inboxes;
         document.getElementById('message-count').textContent = stats.messages;
         document.getElementById('pending-count').textContent = stats.pending;
+        document.getElementById('approved-count').textContent = stats.approved;
+        document.getElementById('in-progress-count').textContent = stats.inProgress;
         updatePendingCount(stats.pending);
       } catch (err) {
         console.error('Failed to load stats:', err);

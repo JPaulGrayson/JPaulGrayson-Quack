@@ -325,16 +325,20 @@ export function getAllInboxes(): string[] {
 }
 
 // Get stats
-export function getStats(): { inboxes: number; messages: number; pending: number } {
+export function getStats(): { inboxes: number; messages: number; pending: number; approved: number; inProgress: number } {
   let inboxCount = 0;
   let messages = 0;
   let pending = 0;
+  let approved = 0;
+  let inProgress = 0;
   
   for (const [_, msgs] of inboxes) {
     if (msgs.length > 0) {
       inboxCount++;
       messages += msgs.length;
       pending += msgs.filter(m => m.status === 'pending').length;
+      approved += msgs.filter(m => m.status === 'approved').length;
+      inProgress += msgs.filter(m => m.status === 'in_progress').length;
     }
   }
   
@@ -342,6 +346,8 @@ export function getStats(): { inboxes: number; messages: number; pending: number
     inboxes: inboxCount,
     messages,
     pending,
+    approved,
+    inProgress,
   };
 }
 
