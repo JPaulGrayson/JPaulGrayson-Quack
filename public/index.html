@@ -1245,20 +1245,31 @@ GET /api/inbox/your-name to check replies</code>
           `;
         } else {
           content.innerHTML = messages.map(m => `
-            <div class="message-row" data-id="${m.id}" style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; transition: background 0.2s;">
-              <div class="message-from">From: ${m.from} · <span class="status-badge status-${m.status}">${m.status.replace('_', ' ')}</span></div>
-              <div class="message-task" style="margin: 0.5rem 0;">${m.task.substring(0, 200)}${m.task.length > 200 ? '...' : ''}</div>
-              <div class="message-time">${timeAgo(m.timestamp)}</div>
-              ${m.files && m.files.length > 0 ? `<div class="files-list" style="margin-top: 0.5rem;">${m.files.map(f => `<span class="file-tag">${f.name}</span>`).join('')}</div>` : ''}
+            <div class="message-row" data-id="${m.id}" style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; transition: background 0.2s;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                <div style="flex: 1; cursor: pointer;" class="message-clickable">
+                  <div class="message-from">From: ${m.from} · <span class="status-badge status-${m.status}">${m.status.replace('_', ' ')}</span></div>
+                  <div class="message-task" style="margin: 0.5rem 0;">${m.task.substring(0, 200)}${m.task.length > 200 ? '...' : ''}</div>
+                  <div class="message-time">${timeAgo(m.timestamp)}</div>
+                  ${m.files && m.files.length > 0 ? `<div class="files-list" style="margin-top: 0.5rem;">${m.files.map(f => `<span class="file-tag">${f.name}</span>`).join('')}</div>` : ''}
+                </div>
+                <div class="quick-actions" style="display: flex; flex-direction: column; gap: 0.25rem; flex-shrink: 0;">
+                  ${m.status === 'pending' ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); approveMsg('${m.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Approve</button>` : ''}
+                  <button class="btn btn-sm" onclick="event.stopPropagation(); deleteMsg('${m.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: #ff4444; color: white;">Delete</button>
+                </div>
+              </div>
             </div>
           `).join('');
           
           // Add click handlers after rendering
           content.querySelectorAll('.message-row').forEach(row => {
-            row.addEventListener('click', () => {
-              const msgId = row.dataset.id;
-              openMessage(msgId);
-            });
+            const clickable = row.querySelector('.message-clickable');
+            if (clickable) {
+              clickable.addEventListener('click', () => {
+                const msgId = row.dataset.id;
+                openMessage(msgId);
+              });
+            }
             row.addEventListener('mouseenter', () => {
               row.style.background = 'rgba(255,255,255,0.1)';
             });
