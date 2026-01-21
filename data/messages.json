@@ -99,6 +99,19 @@
       "tags": [
         "test"
       ]
+    },
+    {
+      "id": "685f04b3-d6dd-4d3f-976e-ad6e35bbcf9c",
+      "to": "claude",
+      "from": "test-agent",
+      "timestamp": "2026-01-21T03:52:30.858Z",
+      "expiresAt": "2026-01-23T03:52:30.858Z",
+      "status": "pending",
+      "task": "Test hold for approval for conversational agent",
+      "files": [],
+      "threadId": "685f04b3-d6dd-4d3f-976e-ad6e35bbcf9c",
+      "routing": "cowork",
+      "routedAt": "2026-01-21T03:52:30.858Z"
     }
   ],
   "replit/orchestrate": [
@@ -198,6 +211,21 @@
       "threadId": "4ae4fe0c-c512-418f-b3d4-57bbd7e5670c",
       "routing": "cowork",
       "routedAt": "2026-01-21T02:01:02.137Z"
+    }
+  ],
+  "replit": [
+    {
+      "id": "384334c8-2c20-44e6-87b0-529175bd993c",
+      "to": "replit",
+      "from": "test-agent",
+      "timestamp": "2026-01-21T03:51:42.798Z",
+      "expiresAt": "2026-01-23T03:51:42.798Z",
+      "status": "in_progress",
+      "task": "Test auto-approve for autonomous agent",
+      "files": [],
+      "threadId": "384334c8-2c20-44e6-87b0-529175bd993c",
+      "routing": "cowork",
+      "routedAt": "2026-01-21T03:51:42.798Z"
     }
   ]
 }

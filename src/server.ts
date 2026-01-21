@@ -26,7 +26,7 @@ import {
   validateInboxPath,
   resetAllData
 } from './store.js';
-import { SendMessageRequest, VALID_STATUSES, MessageStatus, QuackMessage } from './types.js';
+import { SendMessageRequest, VALID_STATUSES, MessageStatus, QuackMessage, CoWorkRouteAction } from './types.js';
 import { QuackStore, Dispatcher } from '../packages/@quack/core/dist/index.js';
 import { handleMCPSSE, handleMCPMessage } from './mcp-handler.js';
 import { initFileStore, uploadFile, getFile, getFileMeta } from './file-store.js';
@@ -39,7 +39,13 @@ import {
   updateLastActivity,
   getCoWorkStats,
   deleteAgent,
-  shouldAutoApprove 
+  shouldAutoApprove,
+  addRoutedMessage,
+  getRoutedMessage,
+  getRoutedMessagesForAgent,
+  updateRoutedMessageStatus,
+  removeRoutedMessage,
+  getAllRoutedMessages
 } from './cowork-store.js';
 
 // ElevenLabs client for generating duck sounds
@@ -103,6 +109,81 @@ app.post('/api/send', (req, res) => {
     
     if (!request.to || !request.task) {
       return res.status(400).json({ error: 'Missing required fields: to, task' });
+    }
+    
+    // Handle CoWork routing: to="cowork" with destination field
+    if (request.to === 'cowork' || request.to === '/cowork') {
+      if (!request.destination) {
+        return res.status(400).json({ 
+          error: 'Missing destination field for CoWork routing',
+          hint: 'When to="cowork", you must specify destination (e.g., destination="claude")'
+        });
+      }
+      
+      // Create CoWork routed message
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+      const id = crypto.randomUUID();
+      
+      const coworkMessage: QuackMessage = {
+        id,
+        to: 'cowork',
+        from: request.from,
+        timestamp: now.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+        status: 'pending',
+        task: request.task,
+        context: request.context,
+        files: request.files || [],
+        project: request.project,
+        priority: request.priority,
+        tags: request.tags,
+        routing: 'cowork',
+        routedAt: now.toISOString(),
+        destination: request.destination,
+        coworkStatus: 'pending',
+        threadId: id,
+      };
+      
+      // Check destination agent config for auto-routing
+      const destAgent = request.destination.split('/')[0];
+      const agentConfig = getAgent(destAgent);
+      
+      if (agentConfig && !agentConfig.requiresApproval) {
+        // Auto-route to destination (autonomous agent)
+        const destRequest: SendMessageRequest = {
+          to: request.destination,
+          from: request.from,
+          task: request.task,
+          context: request.context,
+          files: request.files,
+          project: request.project,
+          priority: request.priority,
+          tags: request.tags,
+          routing: 'cowork',
+        };
+        const routedMsg = sendMessage(destRequest, request.from);
+        
+        return res.json({
+          success: true,
+          messageId: routedMsg.id,
+          message: routedMsg,
+          coworkRouted: true,
+          autoApproved: true,
+        });
+      }
+      
+      // Hold for approval (conversational agent or requiresApproval=true)
+      addRoutedMessage(coworkMessage);
+      
+      return res.json({
+        success: true,
+        messageId: coworkMessage.id,
+        message: coworkMessage,
+        coworkRouted: true,
+        autoApproved: false,
+        hint: 'Message held for approval. Use POST /api/cowork/route to approve/reject.',
+      });
     }
     
     // Validate inbox path format
@@ -506,6 +587,129 @@ app.post('/api/cowork/ping/:agent', (req, res) => {
   const agentName = req.params.agent;
   updateLastActivity(agentName);
   res.json({ success: true, agent: agentName, timestamp: new Date().toISOString() });
+});
+
+// Get CoWork-routed messages for an agent
+app.get('/api/cowork/messages', (req, res) => {
+  const destination = req.query.destination as string;
+  
+  if (!destination) {
+    // Return all routed messages
+    const messages = getAllRoutedMessages();
+    return res.json({ messages, count: messages.length });
+  }
+  
+  // Update last activity for this agent
+  const agentName = destination.split('/')[0];
+  updateLastActivity(agentName);
+  
+  const messages = getRoutedMessagesForAgent(destination);
+  res.json({ 
+    destination, 
+    messages, 
+    count: messages.length 
+  });
+});
+
+// Manual routing decision from Control Room
+app.post('/api/cowork/route', (req, res) => {
+  try {
+    const { messageId, action, forwardTo } = req.body as { 
+      messageId: string; 
+      action: CoWorkRouteAction;
+      forwardTo?: string;  // destination when action='forward'
+    };
+    
+    if (!messageId || !action) {
+      return res.status(400).json({ error: 'Missing required fields: messageId, action' });
+    }
+    
+    if (!['approve', 'reject', 'forward'].includes(action)) {
+      return res.status(400).json({ error: 'Invalid action. Must be: approve, reject, or forward' });
+    }
+    
+    const message = getRoutedMessage(messageId);
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found in CoWork routing' });
+    }
+    
+    // Update CoWork status
+    const updatedMessage = updateRoutedMessageStatus(messageId, action);
+    
+    if (action === 'approve' && message.destination) {
+      // Route to destination inbox
+      const destRequest: SendMessageRequest = {
+        to: message.destination,
+        from: message.from,
+        task: message.task,
+        context: message.context,
+        files: message.files,
+        project: message.project,
+        priority: message.priority,
+        tags: message.tags,
+        routing: 'cowork',
+      };
+      const routedMsg = sendMessage(destRequest, message.from);
+      
+      // Remove from CoWork pending
+      removeRoutedMessage(messageId);
+      
+      return res.json({ 
+        success: true, 
+        action,
+        originalId: messageId,
+        routedMessage: routedMsg,
+      });
+    }
+    
+    if (action === 'forward') {
+      if (!forwardTo) {
+        return res.status(400).json({ 
+          error: 'Missing forwardTo field for forward action',
+          hint: 'Specify forwardTo to indicate where to forward the message'
+        });
+      }
+      // Forward to different destination
+      const fwdRequest: SendMessageRequest = {
+        to: forwardTo,
+        from: message.from,
+        task: message.task,
+        context: message.context,
+        files: message.files,
+        project: message.project,
+        priority: message.priority,
+        tags: message.tags,
+        routing: 'cowork',
+      };
+      const forwardedMsg = sendMessage(fwdRequest, message.from);
+      
+      // Remove from CoWork pending
+      removeRoutedMessage(messageId);
+      
+      return res.json({ 
+        success: true, 
+        action,
+        originalId: messageId,
+        forwardedTo: forwardTo,
+        routedMessage: forwardedMsg,
+      });
+    }
+    
+    if (action === 'reject') {
+      // Just remove from CoWork routing
+      removeRoutedMessage(messageId);
+      return res.json({ 
+        success: true, 
+        action,
+        messageId,
+      });
+    }
+    
+    res.json({ success: true, action, message: updatedMessage });
+  } catch (err) {
+    console.error('CoWork route error:', err);
+    res.status(500).json({ error: 'Failed to route message' });
+  }
 });
 
 // ============== FILE UPLOAD API ==============

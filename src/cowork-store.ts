@@ -6,16 +6,18 @@
 
 import fs from 'fs';
 import path from 'path';
-import { AgentConfig, AgentCategory } from './types.js';
+import { AgentConfig, AgentCategory, QuackMessage, CoWorkRouteAction } from './types.js';
 
 const COWORK_FILE = './data/cowork.json';
 
 interface CoWorkData {
   agents: Record<string, AgentConfig>;
+  routedMessages: Record<string, QuackMessage>;  // messages routed through CoWork
 }
 
 let data: CoWorkData = {
   agents: {},
+  routedMessages: {},
 };
 
 export function initCoWorkStore(): void {
@@ -26,7 +28,11 @@ export function initCoWorkStore(): void {
     }
     
     if (fs.existsSync(COWORK_FILE)) {
-      data = JSON.parse(fs.readFileSync(COWORK_FILE, 'utf-8'));
+      const loaded = JSON.parse(fs.readFileSync(COWORK_FILE, 'utf-8'));
+      data = {
+        agents: loaded.agents || {},
+        routedMessages: loaded.routedMessages || {},
+      };
       console.log(`🔧 CoWork: Loaded ${Object.keys(data.agents).length} agent configs`);
     } else {
       registerDefaultAgents();
@@ -159,4 +165,55 @@ export function deleteAgent(name: string): boolean {
     return true;
   }
   return false;
+}
+
+// ============== CoWork Routing ==============
+
+export function addRoutedMessage(message: QuackMessage): void {
+  data.routedMessages[message.id] = message;
+  persistCoWorkStore();
+  console.log(`🔧 CoWork: Routed message ${message.id} to ${message.destination}`);
+}
+
+export function getRoutedMessage(id: string): QuackMessage | null {
+  return data.routedMessages[id] || null;
+}
+
+export function getRoutedMessagesForAgent(destination: string): QuackMessage[] {
+  return Object.values(data.routedMessages)
+    .filter(m => {
+      // Match exact destination or prefix (e.g., "claude" matches "claude/project")
+      const destAgent = m.destination?.split('/')[0];
+      return destAgent === destination || m.destination === destination;
+    })
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+}
+
+export function updateRoutedMessageStatus(
+  id: string, 
+  action: CoWorkRouteAction
+): QuackMessage | null {
+  const message = data.routedMessages[id];
+  if (!message) return null;
+  
+  message.coworkStatus = action === 'approve' ? 'approved' 
+    : action === 'reject' ? 'rejected' 
+    : 'forwarded';
+  
+  persistCoWorkStore();
+  console.log(`🔧 CoWork: Message ${id} status updated to ${message.coworkStatus}`);
+  return message;
+}
+
+export function removeRoutedMessage(id: string): boolean {
+  if (data.routedMessages[id]) {
+    delete data.routedMessages[id];
+    persistCoWorkStore();
+    return true;
+  }
+  return false;
+}
+
+export function getAllRoutedMessages(): QuackMessage[] {
+  return Object.values(data.routedMessages);
 }

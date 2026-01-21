@@ -130,10 +130,32 @@ CoWork is an optional orchestration layer that wraps Quack Direct. Phase 1 imple
 - Default agents pre-registered: claude, gpt, gemini, grok, copilot (conversational), replit, cursor, antigravity (autonomous)
 - Last activity tracking updates when agents check their inbox
 
-**Routing Logic:**
+**Phase 1 - Routing Logic:**
 - Messages include `routing` field: "direct" (default) or "cowork"
 - Auto-approval determined by CoWork agent registry (not hardcoded)
 - `routedAt` timestamp set for cowork-routed messages
+
+**Phase 2 - CoWork Routing:**
+When `to="cowork"` is used with a `destination` field, messages are routed through CoWork:
+
+```
+POST /api/send
+{
+  "to": "cowork",
+  "destination": "claude",
+  "from": "replit",
+  "task": "Review this code"
+}
+```
+
+Routing behavior:
+- If destination agent is **autonomous** (e.g., replit, cursor): auto-route immediately
+- If destination agent is **conversational** (e.g., claude, gpt): hold for approval
+
+New endpoints:
+- `GET /api/cowork/messages` - Get all CoWork-routed messages
+- `GET /api/cowork/messages?destination=claude` - Get messages for specific agent
+- `POST /api/cowork/route` - Manual routing: `{ messageId, action: "approve"|"reject"|"forward", forwardTo? }`
 
 **Dashboard:**
 - New "Agents" tab shows registered agents with online status, category, and approval settings

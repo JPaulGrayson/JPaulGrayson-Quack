@@ -69,12 +69,17 @@ export interface QuackMessage {
   // CoWork routing
   routing?: RoutingType;        // 'direct' (default) or 'cowork'
   routedAt?: string;            // when message was routed via CoWork
+  destination?: string;         // final recipient when routed via CoWork
+  coworkStatus?: 'pending' | 'approved' | 'rejected' | 'forwarded';  // CoWork routing status
   
   // Threading
   replyTo?: string;             // message ID this is replying to
   threadId?: string;            // thread ID linking conversation
   replyCount?: number;          // number of replies to this message
 }
+
+// CoWork routing action
+export type CoWorkRouteAction = 'approve' | 'reject' | 'forward';
 
 // API request types
 export interface SendMessageRequest {
@@ -94,6 +99,7 @@ export interface SendMessageRequest {
   tags?: string[];              // arbitrary tags for organization
   // CoWork routing
   routing?: RoutingType;        // 'direct' (default) or 'cowork'
+  destination?: string;         // final recipient when to='cowork'
 }
 
 export interface InboxResponse {
