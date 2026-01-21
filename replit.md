@@ -198,6 +198,7 @@ Actions automatically logged: message.send, message.approve, message.complete, m
 - **Mission Control**: Button opens Quack + Claude.ai side-by-side for streamlined approval workflow
 - **Agent Edit Modal**: Click on agents in Agents tab to edit platformUrl and notifyPrompt
 - **Enhanced Approve Button**: Opens platformUrl in new tab and shows toast with notifyPrompt to copy
+- **Audit Tab**: View all system events with filtering by action type and actor, pagination, and database health status
 
 ## @quack/core Package
 
