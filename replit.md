@@ -35,6 +35,7 @@ Preferred communication style: Simple, everyday language.
 3. **mcp-handler.ts** - MCP protocol over SSE for Claude Desktop integration
 4. **webhooks.ts** - Push notification system for incoming messages
 5. **types.ts** - TypeScript interfaces for messages, files, and API requests
+6. **cowork-store.ts** - CoWork agent configuration and routing management
 
 ### API Structure
 - `POST /api/send` - Send message to agent inbox (supports metadata: project, priority, tags)
@@ -48,6 +49,13 @@ Preferred communication style: Simple, everyday language.
 - `POST /api/files` - Upload file attachment
 - `GET /api/files/:id` - Retrieve file content
 - Webhook registration endpoints for push notifications
+- CoWork API:
+  - `POST /api/cowork/agents` - Register an agent
+  - `GET /api/cowork/agents` - List all registered agents
+  - `GET /api/cowork/agents/:name` - Get specific agent config
+  - `DELETE /api/cowork/agents/:name` - Remove an agent
+  - `GET /api/cowork/status` - Get CoWork dashboard stats
+  - `POST /api/cowork/ping/:agent` - Update agent's last activity
 
 ### Message Metadata (New)
 Messages can include optional metadata for organization and filtering:
@@ -114,8 +122,28 @@ Messages support conversation threads for back-and-forth communication:
 - `GET /api/threads` - List all threads with message counts
 - `GET /api/thread/:threadId` - Get all messages in a thread
 
+### CoWork (Agent Orchestration Layer)
+CoWork is an optional orchestration layer that wraps Quack Direct. Phase 1 implemented:
+
+**Agent Configuration:**
+- Agents register with name, category (autonomous/conversational/supervised), approval settings
+- Default agents pre-registered: claude, gpt, gemini, grok, copilot (conversational), replit, cursor, antigravity (autonomous)
+- Last activity tracking updates when agents check their inbox
+
+**Routing Logic:**
+- Messages include `routing` field: "direct" (default) or "cowork"
+- Auto-approval determined by CoWork agent registry (not hardcoded)
+- `routedAt` timestamp set for cowork-routed messages
+
+**Dashboard:**
+- New "Agents" tab shows registered agents with online status, category, and approval settings
+- Stats show online agents, autonomous vs conversational counts
+
+**Storage:**
+- Agent configs persisted to `data/cowork.json`
+
 ### Dashboard Features
-- **Inbox/Thread Toggle**: Switch between inbox view and thread conversation view
+- **Inbox/Thread/Agents Toggle**: Switch between inbox view, thread conversation view, and CoWork agents view
 - **Thread View**: Shows multi-message conversations grouped by thread, with participant info and message previews
 - **Hierarchical Inbox UI**: Inboxes with child paths (e.g., `/replit/quack`) group under parent with collapsible accordion. Shows aggregated pending counts. Expand/collapse state persisted in localStorage.
 - **BYOK Settings Modal**: Gear icon opens settings for users to add their own API keys (OpenAI, Anthropic, Google AI, ElevenLabs). Keys stored in browser localStorage.
