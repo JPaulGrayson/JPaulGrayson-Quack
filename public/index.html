@@ -2197,42 +2197,27 @@ GET /api/inbox/your-name to check replies</code>
       closeModal();
     }
 
-    // Approve message (for Orchestrate workflow) - enhanced with platform URL + notify prompt
+    // Approve message (for Orchestrate workflow) - with automation support
     async function approveMsg(messageId) {
-      // Get message first to find target agent
-      let message = null;
       try {
-        const msgRes = await fetch(`${API_BASE}/api/message/${messageId}`);
-        if (msgRes.ok) {
-          message = await msgRes.json();
+        // Approve the message and get automation status
+        const res = await fetch(`${API_BASE}/api/approve/${messageId}`, { method: 'POST' });
+        const data = await res.json();
+        playQuackSound('send');
+        
+        // Show automation status
+        if (data.automation === 'requested') {
+          showAutomationToast('Claude is handling the notification automatically!');
+        } else if (data.automation === 'manual') {
+          // Fallback: Show manual notification options
+          if (data.notifyPrompt) {
+            showNotifyPromptToast(data.notifyPrompt, 'target agent', data.platformUrl);
+          } else if (data.platformUrl) {
+            showApprovalToast('target agent', data.platformUrl);
+          }
         }
       } catch (e) {
-        console.log('Could not fetch message:', e);
-      }
-      
-      // Approve the message
-      await fetch(`${API_BASE}/api/approve/${messageId}`, { method: 'POST' });
-      playQuackSound('send');
-      
-      // Get target agent's platform info (only if we have the message)
-      if (message && message.to) {
-        const targetAgent = message.to.split('/')[0];
-        try {
-          const agentRes = await fetch(`${API_BASE}/api/cowork/agents/${targetAgent}`);
-          if (agentRes.ok) {
-            const { agent } = await agentRes.json();
-            
-            // Show notify prompt toast with platform link (no auto-open)
-            if (agent && agent.notifyPrompt) {
-              showNotifyPromptToast(agent.notifyPrompt, agent.name, agent.platformUrl);
-            } else if (agent && agent.platformUrl) {
-              // Just show simple approval toast with link
-              showApprovalToast(agent.name, agent.platformUrl);
-            }
-          }
-        } catch (e) {
-          console.log('Could not fetch agent info:', e);
-        }
+        console.error('Failed to approve:', e);
       }
       
       loadStats();
@@ -2804,13 +2789,38 @@ GET /api/inbox/your-name to check replies</code>
 
     async function approveFromToast(messageId, toast) {
       try {
-        await fetch(`${API_BASE}/api/approve/${messageId}`, { method: 'POST' });
+        const res = await fetch(`${API_BASE}/api/approve/${messageId}`, { method: 'POST' });
+        const data = await res.json();
         toast.remove();
+        
+        // Show automation status
+        if (data.automation === 'requested') {
+          showAutomationToast('Claude is handling the notification automatically!');
+        } else if (data.automation === 'manual' && data.platformUrl) {
+          showNotifyPromptToast(data.notifyPrompt || data.prompt, 'target agent', data.platformUrl);
+        }
+        
         loadStats();
         loadInboxes();
       } catch (e) {
         console.error('Failed to approve:', e);
       }
+    }
+    
+    function showAutomationToast(message) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.style.borderColor = '#00d9ff';
+      toast.innerHTML = `
+        <div class="toast-header">
+          <span class="toast-title" style="color: #00d9ff;">🤖 Automation Active</span>
+          <button class="toast-close" onclick="this.closest('.toast').remove()">×</button>
+        </div>
+        <div class="toast-body">${escapeHtml(message)}</div>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => { if (toast.parentNode) toast.remove(); }, 5000);
     }
 
     function viewFromToast(inbox, toast) {

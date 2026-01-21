@@ -373,9 +373,65 @@ app.post('/api/approve/:id', (req, res) => {
   
   const message = approveMessage(req.params.id);
   
+  if (!message) {
+    return res.status(500).json({ success: false, error: 'Failed to approve message' });
+  }
+  
+  const { userComment } = req.body || {};
+  
+  // Get target agent's platform info for automation
+  const targetAgentName = message.to.replace(/^\//, '').split('/')[0];
+  const targetAgent = getAgent(targetAgentName);
+  
+  // Check if Claude is online (checked inbox in last 5 minutes)
+  const claude = getAgent('claude');
+  const claudeOnline = claude?.lastActivity && 
+    new Date(claude.lastActivity) > new Date(Date.now() - 5 * 60 * 1000);
+  
+  // Build enriched prompt for the target agent
+  const shortId = req.params.id.slice(0, 8);
+  const prompt = userComment 
+    ? `quack id:${shortId} "${userComment}"`
+    : `quack id:${shortId}`;
+  
+  if (claudeOnline && targetAgent?.platformUrl) {
+    // Send automation request to Claude's inbox
+    const automationRequest = {
+      action: 'notify-agent',
+      target: message.to,
+      messageId: req.params.id,
+      platformUrl: targetAgent.platformUrl,
+      prompt: prompt,
+      messageSummary: message.task?.substring(0, 100) || ''
+    };
+    
+    sendMessage({
+      to: 'claude',
+      from: 'quack/system',
+      task: JSON.stringify(automationRequest),
+      project: 'automation',
+      priority: 'high',
+      tags: ['automation', 'notify-agent']
+    }, 'quack/system');
+    
+    console.log(`🤖 Automation request sent to Claude for ${message.to}`);
+    
+    return res.json({
+      success: true,
+      message,
+      automation: 'requested',
+      prompt
+    });
+  }
+  
+  // Fallback: Claude not online, return info for manual notification
   res.json({
     success: true,
     message,
+    automation: 'manual',
+    prompt,
+    platformUrl: targetAgent?.platformUrl,
+    notifyPrompt: targetAgent?.notifyPrompt
   });
 });
 
