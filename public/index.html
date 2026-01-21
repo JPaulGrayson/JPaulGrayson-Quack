@@ -2720,11 +2720,22 @@ GET /api/inbox/your-name to check replies</code>
       updateMuteButton();
     }
 
+    let lastSoundTime = 0;
+    const SOUND_COOLDOWN = 2000; // 2 second cooldown between sounds
+    
     function playQuackSound(type = 'send') {
       if (!soundEnabled) {
         console.log('🦆 Sound muted, skipping playback');
         return;
       }
+      
+      // Prevent double quacks with cooldown
+      const now = Date.now();
+      if (now - lastSoundTime < SOUND_COOLDOWN) {
+        console.log('🦆 Sound skipped (cooldown active)');
+        return;
+      }
+      lastSoundTime = now;
       
       console.log('🦆 Attempting to play sound:', type);
       
