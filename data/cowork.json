@@ -7,7 +7,7 @@
       "autoApproveOnCheck": false,
       "notifyVia": "polling",
       "registeredAt": "2026-01-21T01:56:03.397Z",
-      "lastActivity": "2026-01-21T04:27:25.129Z"
+      "lastActivity": "2026-01-21T04:28:15.232Z"
     },
     "gpt": {
       "name": "gpt",
@@ -16,7 +16,7 @@
       "autoApproveOnCheck": false,
       "notifyVia": "polling",
       "registeredAt": "2026-01-21T01:56:03.397Z",
-      "lastActivity": "2026-01-21T04:27:25.112Z"
+      "lastActivity": "2026-01-21T04:28:15.121Z"
     },
     "gemini": {
       "name": "gemini",
@@ -25,7 +25,7 @@
       "autoApproveOnCheck": false,
       "notifyVia": "polling",
       "registeredAt": "2026-01-21T01:56:03.397Z",
-      "lastActivity": "2026-01-21T04:27:25.104Z"
+      "lastActivity": "2026-01-21T04:28:15.119Z"
     },
     "grok": {
       "name": "grok",
@@ -34,7 +34,7 @@
       "autoApproveOnCheck": false,
       "notifyVia": "polling",
       "registeredAt": "2026-01-21T01:56:03.397Z",
-      "lastActivity": "2026-01-21T04:27:25.114Z"
+      "lastActivity": "2026-01-21T04:28:15.120Z"
     },
     "copilot": {
       "name": "copilot",
@@ -43,7 +43,7 @@
       "autoApproveOnCheck": false,
       "notifyVia": "polling",
       "registeredAt": "2026-01-21T01:56:03.397Z",
-      "lastActivity": "2026-01-21T04:27:25.123Z"
+      "lastActivity": "2026-01-21T04:28:15.226Z"
     },
     "replit": {
       "name": "replit",
@@ -52,7 +52,7 @@
       "autoApproveOnCheck": true,
       "notifyVia": "polling",
       "registeredAt": "2026-01-21T01:56:03.397Z",
-      "lastActivity": "2026-01-21T04:27:25.133Z"
+      "lastActivity": "2026-01-21T04:28:15.298Z"
     },
     "cursor": {
       "name": "cursor",
@@ -61,7 +61,7 @@
       "autoApproveOnCheck": true,
       "notifyVia": "polling",
       "registeredAt": "2026-01-21T01:56:03.397Z",
-      "lastActivity": "2026-01-21T04:27:25.131Z"
+      "lastActivity": "2026-01-21T04:28:15.228Z"
     },
     "antigravity": {
       "name": "antigravity",
@@ -70,7 +70,7 @@
       "autoApproveOnCheck": true,
       "notifyVia": "polling",
       "registeredAt": "2026-01-21T01:56:03.397Z",
-      "lastActivity": "2026-01-21T04:27:25.124Z"
+      "lastActivity": "2026-01-21T04:28:15.229Z"
     },
     "logicart": {
       "name": "logicart",
