@@ -102,6 +102,8 @@ export interface SendMessageRequest {
   // CoWork routing
   routing?: RoutingType;        // 'direct' (default) or 'cowork'
   destination?: string;         // final recipient when to='cowork'
+  // Override auto-approval
+  requireApproval?: boolean;    // force message to pending status (skip auto-approve)
 }
 
 export interface InboxResponse {

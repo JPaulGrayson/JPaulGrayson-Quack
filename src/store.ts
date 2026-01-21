@@ -225,9 +225,11 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
   
   // Determine if this is agent-to-agent (autonomous) or needs human approval
   // Uses CoWork agent registry for dynamic configuration
+  // Can be overridden with requireApproval flag
   const fromPlatform = (fromAgent || req.from || '').replace(/^\/+/, '').split('/')[0].toLowerCase();
   const toPlatform = req.to.replace(/^\/+/, '').split('/')[0].toLowerCase();
-  const isAutonomous = coworkShouldAutoApprove(fromPlatform, toPlatform);
+  const wouldAutoApprove = coworkShouldAutoApprove(fromPlatform, toPlatform);
+  const shouldApprove = req.requireApproval ? false : wouldAutoApprove;
   
   const message: QuackMessage = {
     id: messageId,
@@ -235,7 +237,7 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
     from: fromAgent || req.from,
     timestamp: now.toISOString(),
     expiresAt: expiresAt.toISOString(),
-    status: isAutonomous ? 'approved' : 'pending',  // Auto-approve agent-to-agent
+    status: shouldApprove ? 'approved' : 'pending',  // Auto-approve unless overridden
     task: req.task,
     context: req.context,
     files: req.files || [],
@@ -267,7 +269,7 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
   inboxes.get(inbox)!.push(message);
   persistStore();
   
-  console.log(`📨 Message ${message.id} sent to /${inbox}${isAutonomous ? ' (auto-approved)' : ''}${threadId ? ` (thread: ${threadId.substring(0, 8)}...)` : ''}`);
+  console.log(`📨 Message ${message.id} sent to /${inbox}${shouldApprove ? ' (auto-approved)' : ''}${threadId ? ` (thread: ${threadId.substring(0, 8)}...)` : ''}`);
   
   // Audit log
   logAudit('message.send', message.from, 'message', message.id, {

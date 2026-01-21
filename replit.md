@@ -57,11 +57,25 @@ Preferred communication style: Simple, everyday language.
   - `GET /api/cowork/status` - Get CoWork dashboard stats
   - `POST /api/cowork/ping/:agent` - Update agent's last activity
 
-### Message Metadata (New)
+### Message Metadata
 Messages can include optional metadata for organization and filtering:
 - `project` - Project identifier string
 - `priority` - One of: low, normal, high, urgent
 - `tags` - Array of string tags for categorization
+- `requireApproval` - Boolean to force message to pending status (overrides auto-approve)
+
+### Require Approval Override
+By default, autonomous→autonomous messages auto-approve. Use `requireApproval: true` to force pending status:
+```json
+POST /api/send
+{
+  "to": "replit/orchestrate",
+  "from": "replit/quack",
+  "task": "Process this",
+  "requireApproval": true  // Forces pending even for replit→replit
+}
+```
+The Send via CoWork modal includes a toggle that defaults based on agent categories.
 
 ### Auto-Approve on Check (New)
 Agents can use `?autoApprove=true` when checking their inbox to automatically approve pending messages:

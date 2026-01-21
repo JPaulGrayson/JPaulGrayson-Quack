@@ -1182,6 +1182,15 @@ GET /api/inbox/your-name to check replies</code>
           <textarea id="cowork-task" class="api-key-input" rows="4" placeholder="What should the agent do?" style="width: 100%; resize: vertical;"></textarea>
         </div>
         
+        <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+          <label class="toggle-switch" style="margin: 0;">
+            <input type="checkbox" id="cowork-require-approval">
+            <span class="toggle-slider"></span>
+          </label>
+          <span style="color: #ccc;">Require Approval</span>
+          <span id="approval-hint" style="color: #888; font-size: 0.8rem; margin-left: auto;"></span>
+        </div>
+        
         <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
           <button class="btn btn-secondary" onclick="closeCoWorkModal()">Cancel</button>
           <button class="btn btn-primary" onclick="sendViaCoWork()" style="background: linear-gradient(135deg, #00d9ff, #0066ff);">Send via CoWork</button>
@@ -1685,6 +1694,8 @@ GET /api/inbox/your-name to check replies</code>
       loadAuditLogs();
     }
 
+    let coworkAgentsCache = [];
+    
     async function openCoWorkModal() {
       const modal = document.getElementById('cowork-modal');
       modal.classList.add('active');
@@ -1693,11 +1704,48 @@ GET /api/inbox/your-name to check replies</code>
       try {
         const res = await fetch(`${API_BASE}/api/cowork/agents`);
         const { agents } = await res.json();
+        coworkAgentsCache = agents;
         const select = document.getElementById('cowork-destination');
         select.innerHTML = '<option value="">Select agent...</option>' + 
           agents.map(a => `<option value="${a.name}">${a.name} (${a.category})</option>`).join('');
+        
+        // Update approval toggle when destination or from changes
+        select.addEventListener('change', updateApprovalToggle);
+        document.getElementById('cowork-from').addEventListener('input', updateApprovalToggle);
       } catch (e) {
         console.error('Failed to load agents:', e);
+      }
+    }
+    
+    function updateApprovalToggle() {
+      const destination = document.getElementById('cowork-destination').value;
+      const from = document.getElementById('cowork-from').value;
+      const toggle = document.getElementById('cowork-require-approval');
+      const hint = document.getElementById('approval-hint');
+      
+      const fromPlatform = from.replace(/^\/+/, '').split('/')[0].toLowerCase();
+      const destPlatform = destination.split('/')[0].toLowerCase();
+      
+      const fromAgent = coworkAgentsCache.find(a => a.name === fromPlatform);
+      const destAgent = coworkAgentsCache.find(a => a.name === destPlatform);
+      
+      // Determine if this would auto-approve
+      const toConversational = destAgent?.category === 'conversational';
+      const fromConversational = fromAgent?.category === 'conversational';
+      const bothAutonomous = !fromConversational && !toConversational;
+      
+      if (toConversational) {
+        toggle.checked = false;
+        hint.textContent = 'Auto-approved (conversational agent)';
+      } else if (bothAutonomous) {
+        toggle.checked = false;
+        hint.textContent = 'Auto-approved (autonomous → autonomous)';
+      } else if (fromConversational) {
+        toggle.checked = true;
+        hint.textContent = 'Requires approval (needs automation trigger)';
+      } else {
+        toggle.checked = false;
+        hint.textContent = '';
       }
     }
 
@@ -1706,12 +1754,15 @@ GET /api/inbox/your-name to check replies</code>
       document.getElementById('cowork-destination').value = '';
       document.getElementById('cowork-from').value = '';
       document.getElementById('cowork-task').value = '';
+      document.getElementById('cowork-require-approval').checked = false;
+      document.getElementById('approval-hint').textContent = '';
     }
 
     async function sendViaCoWork() {
       const destination = document.getElementById('cowork-destination').value;
       const from = document.getElementById('cowork-from').value;
       const task = document.getElementById('cowork-task').value;
+      const requireApproval = document.getElementById('cowork-require-approval').checked;
       
       if (!destination || !from || !task) {
         showToast('Please fill in all fields', 'error');
@@ -1726,7 +1777,8 @@ GET /api/inbox/your-name to check replies</code>
             to: 'cowork',
             destination,
             from,
-            task
+            task,
+            requireApproval
           })
         });
         const data = await res.json();

@@ -51,5 +51,46 @@
       ],
       "routing": "direct"
     }
+  ],
+  "replit/orchestrate": [
+    {
+      "id": "41752060-6640-4ed5-96a7-51517b4a3feb",
+      "to": "replit/orchestrate",
+      "from": "replit/quack",
+      "timestamp": "2026-01-21T22:15:30.653Z",
+      "expiresAt": "2026-01-23T22:15:30.653Z",
+      "status": "in_progress",
+      "task": "Replit-to-Replit test message",
+      "files": [],
+      "threadId": "41752060-6640-4ed5-96a7-51517b4a3feb",
+      "project": "testing",
+      "routing": "direct"
+    },
+    {
+      "id": "599d34a9-d964-4d0e-9165-9f6734065592",
+      "to": "replit/orchestrate",
+      "from": "replit/quack",
+      "timestamp": "2026-01-21T22:15:35.872Z",
+      "expiresAt": "2026-01-23T22:15:35.872Z",
+      "status": "in_progress",
+      "task": "Replit-to-Replit test message",
+      "files": [],
+      "threadId": "599d34a9-d964-4d0e-9165-9f6734065592",
+      "project": "testing",
+      "routing": "direct"
+    },
+    {
+      "id": "83ce6b8a-b15d-4301-a9c0-05be9cbf8867",
+      "to": "replit/orchestrate",
+      "from": "replit/quack",
+      "timestamp": "2026-01-21T22:15:42.938Z",
+      "expiresAt": "2026-01-23T22:15:42.938Z",
+      "status": "pending",
+      "task": "Replit-to-Replit with approval override",
+      "files": [],
+      "threadId": "83ce6b8a-b15d-4301-a9c0-05be9cbf8867",
+      "project": "testing",
+      "routing": "direct"
+    }
   ]
 }

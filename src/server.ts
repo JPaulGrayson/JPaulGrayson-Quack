@@ -155,10 +155,12 @@ app.post('/api/send', (req, res) => {
       };
       
       // Check destination agent config for auto-routing
+      // Can be overridden with requireApproval flag from request
       const destAgent = request.destination.split('/')[0];
       const agentConfig = getAgent(destAgent);
+      const shouldAutoRoute = agentConfig && !agentConfig.requiresApproval && !request.requireApproval;
       
-      if (agentConfig && !agentConfig.requiresApproval) {
+      if (shouldAutoRoute) {
         // Auto-route to destination (autonomous agent)
         const destRequest: SendMessageRequest = {
           to: request.destination,
