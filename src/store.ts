@@ -13,6 +13,7 @@ import {
   SendMessageRequest, 
   MessageStatus 
 } from './types.js';
+import { shouldAutoApprove as coworkShouldAutoApprove } from './cowork-store.js';
 
 const STORE_FILE = './data/messages.json';
 const TTL_HOURS = 48;
@@ -194,12 +195,10 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
   const messageId = uuid();
   
   // Determine if this is agent-to-agent (autonomous) or needs human approval
-  // Conversational agents (human in loop): claude, gpt, gemini, grok, copilot
-  // Autonomous agents: replit, cursor, antigravity, and custom
-  const conversationalAgents = ['claude', 'gpt', 'gemini', 'grok', 'copilot'];
+  // Uses CoWork agent registry for dynamic configuration
   const fromPlatform = (fromAgent || req.from || '').replace(/^\/+/, '').split('/')[0].toLowerCase();
   const toPlatform = req.to.replace(/^\/+/, '').split('/')[0].toLowerCase();
-  const isAutonomous = !conversationalAgents.includes(fromPlatform) && !conversationalAgents.includes(toPlatform);
+  const isAutonomous = coworkShouldAutoApprove(fromPlatform, toPlatform);
   
   const message: QuackMessage = {
     id: messageId,
@@ -219,6 +218,9 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
     project: req.project,
     priority: req.priority,
     tags: req.tags,
+    // CoWork routing
+    routing: req.routing || 'direct',
+    routedAt: req.routing === 'cowork' ? now.toISOString() : undefined,
   };
   
   // Add file sizes if not present

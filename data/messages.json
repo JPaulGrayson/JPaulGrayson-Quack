@@ -16,6 +16,18 @@
         "test",
         "feature-spec"
       ]
+    },
+    {
+      "id": "6cc45049-cc8d-4ac5-b991-f90a4dc8c929",
+      "to": "/claude/test",
+      "from": "/replit/test",
+      "timestamp": "2026-01-21T02:01:03.769Z",
+      "expiresAt": "2026-01-23T02:01:03.769Z",
+      "status": "pending",
+      "task": "Test conversational agent",
+      "files": [],
+      "threadId": "6cc45049-cc8d-4ac5-b991-f90a4dc8c929",
+      "routing": "direct"
     }
   ],
   "claude/inbox": [
@@ -173,6 +185,19 @@
       "files": [],
       "threadId": "8e7e7e5d-270a-47f2-bc5e-253d828b77ef",
       "priority": "urgent"
+    },
+    {
+      "id": "4ae4fe0c-c512-418f-b3d4-57bbd7e5670c",
+      "to": "/replit/test",
+      "from": "/cursor/test",
+      "timestamp": "2026-01-21T02:01:02.137Z",
+      "expiresAt": "2026-01-23T02:01:02.137Z",
+      "status": "approved",
+      "task": "Test with CoWork routing",
+      "files": [],
+      "threadId": "4ae4fe0c-c512-418f-b3d4-57bbd7e5670c",
+      "routing": "cowork",
+      "routedAt": "2026-01-21T02:01:02.137Z"
     }
   ]
 }
