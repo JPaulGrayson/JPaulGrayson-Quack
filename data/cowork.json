@@ -9,7 +9,7 @@
       "platformUrl": "https://claude.ai",
       "notifyPrompt": "Check your Quack inbox at /claude",
       "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-21T20:26:08.504Z"
+      "lastActivity": "2026-01-21T20:28:40.785Z"
     },
     "gpt": {
       "name": "gpt",
@@ -20,7 +20,7 @@
       "platformUrl": "https://chat.openai.com",
       "notifyPrompt": "Check your Quack inbox at /gpt",
       "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-21T20:26:08.505Z"
+      "lastActivity": "2026-01-21T20:28:40.796Z"
     },
     "gemini": {
       "name": "gemini",
@@ -31,7 +31,7 @@
       "platformUrl": "https://gemini.google.com",
       "notifyPrompt": "Check your Quack inbox at /gemini",
       "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-21T20:26:08.508Z"
+      "lastActivity": "2026-01-21T20:28:40.794Z"
     },
     "grok": {
       "name": "grok",
@@ -42,7 +42,7 @@
       "platformUrl": "https://grok.x.ai",
       "notifyPrompt": "Check your Quack inbox at /grok",
       "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-21T20:26:08.492Z"
+      "lastActivity": "2026-01-21T20:28:40.798Z"
     },
     "copilot": {
       "name": "copilot",
@@ -53,7 +53,7 @@
       "platformUrl": "https://copilot.microsoft.com",
       "notifyPrompt": "Check your Quack inbox at /copilot",
       "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-21T20:26:08.550Z"
+      "lastActivity": "2026-01-21T20:28:40.878Z"
     },
     "replit": {
       "name": "replit",
@@ -61,10 +61,10 @@
       "requiresApproval": false,
       "autoApproveOnCheck": true,
       "notifyVia": "polling",
-      "platformUrl": "https://replit.com/@jpaulgrayson/workspace",
+      "platformUrl": "https://replit.com/@jpaulgrayson/Quack",
       "notifyPrompt": "quack",
       "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-21T20:26:08.506Z"
+      "lastActivity": "2026-01-21T20:28:40.798Z"
     },
     "cursor": {
       "name": "cursor",
@@ -74,7 +74,7 @@
       "notifyVia": "polling",
       "notifyPrompt": "Check your Quack inbox at /cursor",
       "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-21T20:26:08.495Z"
+      "lastActivity": "2026-01-21T20:28:40.799Z"
     },
     "antigravity": {
       "name": "antigravity",
@@ -83,7 +83,7 @@
       "autoApproveOnCheck": true,
       "notifyVia": "polling",
       "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-21T20:26:08.559Z"
+      "lastActivity": "2026-01-21T20:28:40.847Z"
     }
   },
   "routedMessages": {}
