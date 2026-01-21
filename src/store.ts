@@ -14,6 +14,7 @@ import {
   MessageStatus 
 } from './types.js';
 import { shouldAutoApprove as coworkShouldAutoApprove } from './cowork-store.js';
+import { logAudit, archiveThread } from './db.js';
 
 const STORE_FILE = './data/messages.json';
 const TTL_HOURS = 48;
@@ -239,6 +240,15 @@ export function sendMessage(req: SendMessageRequest, fromAgent: string): QuackMe
   persistStore();
   
   console.log(`📨 Message ${message.id} sent to /${inbox}${isAutonomous ? ' (auto-approved)' : ''}${threadId ? ` (thread: ${threadId.substring(0, 8)}...)` : ''}`);
+  
+  // Audit log
+  logAudit('message.send', message.from, 'message', message.id, {
+    to: message.to,
+    status: message.status,
+    threadId: message.threadId,
+    priority: message.priority
+  }).catch(e => console.error('Audit log failed:', e));
+  
   return message;
 }
 
@@ -296,6 +306,14 @@ export function completeMessage(messageId: string): QuackMessage | null {
       message.status = 'completed';
       persistStore();
       console.log(`✅ Message ${messageId} marked as completed`);
+      
+      // Audit log
+      logAudit('message.complete', 'system', 'message', messageId, {
+        to: message.to,
+        from: message.from,
+        threadId: message.threadId
+      }).catch(e => console.error('Audit log failed:', e));
+      
       return message;
     }
   }
@@ -313,6 +331,14 @@ export function approveMessage(messageId: string): QuackMessage | null {
       message.status = 'approved';
       persistStore();
       console.log(`👍 Message ${messageId} approved`);
+      
+      // Audit log
+      logAudit('message.approve', 'user', 'message', messageId, {
+        to: message.to,
+        from: message.from,
+        threadId: message.threadId
+      }).catch(e => console.error('Audit log failed:', e));
+      
       return message;
     }
   }
@@ -324,9 +350,19 @@ export function updateMessageStatus(messageId: string, status: MessageStatus): Q
   for (const [_, messages] of inboxes) {
     const message = messages.find(m => m.id === messageId);
     if (message) {
+      const oldStatus = message.status;
       message.status = status;
       persistStore();
       console.log(`📝 Message ${messageId} status updated to: ${status}`);
+      
+      // Audit log
+      logAudit('message.status_change', 'system', 'message', messageId, {
+        from: oldStatus,
+        to: status,
+        msgTo: message.to,
+        msgFrom: message.from
+      }).catch(e => console.error('Audit log failed:', e));
+      
       return message;
     }
   }

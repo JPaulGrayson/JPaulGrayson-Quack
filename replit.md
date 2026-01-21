@@ -166,6 +166,26 @@ New endpoints:
 **Storage:**
 - Agent configs persisted to `data/cowork.json`
 
+### Archive & Audit System (Phase 3)
+PostgreSQL-backed permanent storage for completed threads and action auditing.
+
+**Database Tables:**
+- `archived_threads` - Stores completed message threads with full message history
+- `audit_log` - Tracks all important actions (send, approve, complete, status changes)
+
+**Archive API:**
+- `GET /api/archive/threads` - List archived threads (supports ?limit, ?offset, ?participant, ?since, ?until)
+- `GET /api/archive/threads/:threadId` - Get specific archived thread with messages
+- `POST /api/archive/threads/:threadId` - Manually archive a thread
+
+**Audit API:**
+- `GET /api/audit/logs` - Query audit logs (supports ?action, ?actor, ?targetType, ?targetId, ?since, ?until)
+- `GET /api/audit/stats` - Get audit statistics (total events, last 24h, top actions/actors)
+- `GET /api/db/status` - Check database connection health
+
+**Automatic Audit Logging:**
+Actions automatically logged: message.send, message.approve, message.complete, message.status_change, thread.archive
+
 ### Dashboard Features
 - **Inbox/Thread/Agents Toggle**: Switch between inbox view, thread conversation view, and CoWork agents view
 - **Thread View**: Shows multi-message conversations grouped by thread, with participant info and message previews

@@ -258,5 +258,19 @@
       "routing": "cowork",
       "routedAt": "2026-01-21T03:51:42.798Z"
     }
+  ],
+  "test/audit": [
+    {
+      "id": "a470abe1-6d70-41c0-8182-5e2cec80c53b",
+      "to": "test/audit",
+      "from": "replit",
+      "timestamp": "2026-01-21T16:32:23.508Z",
+      "expiresAt": "2026-01-23T16:32:23.508Z",
+      "status": "approved",
+      "task": "Test audit logging",
+      "files": [],
+      "threadId": "a470abe1-6d70-41c0-8182-5e2cec80c53b",
+      "routing": "direct"
+    }
   ]
 }

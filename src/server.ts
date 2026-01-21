@@ -47,6 +47,15 @@ import {
   removeRoutedMessage,
   getAllRoutedMessages
 } from './cowork-store.js';
+import {
+  testConnection,
+  listArchivedThreads,
+  getArchivedThread,
+  archiveThread,
+  getAuditLogs,
+  getAuditStats,
+  logAudit
+} from './db.js';
 
 // ElevenLabs client for generating duck sounds
 const elevenlabs = process.env.ELEVENLABS_API_KEY 
@@ -967,6 +976,105 @@ async function preGenerateSounds() {
 
 // Start pre-generation in background
 setTimeout(preGenerateSounds, 2000);
+
+// ============== Archive & Audit API ==============
+
+app.get('/api/archive/threads', async (req, res) => {
+  try {
+    const options = {
+      limit: parseInt(req.query.limit as string) || 50,
+      offset: parseInt(req.query.offset as string) || 0,
+      participant: req.query.participant as string,
+      since: req.query.since ? new Date(req.query.since as string) : undefined,
+      until: req.query.until ? new Date(req.query.until as string) : undefined
+    };
+    
+    const result = await listArchivedThreads(options);
+    res.json(result);
+  } catch (e) {
+    console.error('Failed to list archived threads:', e);
+    res.status(500).json({ error: 'Failed to list archived threads' });
+  }
+});
+
+app.get('/api/archive/threads/:threadId', async (req, res) => {
+  try {
+    const thread = await getArchivedThread(req.params.threadId);
+    if (!thread) {
+      return res.status(404).json({ error: 'Archived thread not found' });
+    }
+    res.json({ thread });
+  } catch (e) {
+    console.error('Failed to get archived thread:', e);
+    res.status(500).json({ error: 'Failed to get archived thread' });
+  }
+});
+
+app.post('/api/archive/threads/:threadId', async (req, res) => {
+  try {
+    const threadId = req.params.threadId;
+    const messages = getThreadMessages(threadId);
+    
+    if (messages.length === 0) {
+      return res.status(404).json({ error: 'Thread not found or has no messages' });
+    }
+    
+    const archiveId = await archiveThread(threadId, messages, req.body.metadata || {});
+    
+    await logAudit('thread.archive', 'user', 'thread', threadId, {
+      archiveId,
+      messageCount: messages.length
+    });
+    
+    res.json({ 
+      success: true, 
+      archiveId,
+      messageCount: messages.length 
+    });
+  } catch (e) {
+    console.error('Failed to archive thread:', e);
+    res.status(500).json({ error: 'Failed to archive thread' });
+  }
+});
+
+app.get('/api/audit/logs', async (req, res) => {
+  try {
+    const options = {
+      limit: parseInt(req.query.limit as string) || 100,
+      offset: parseInt(req.query.offset as string) || 0,
+      action: req.query.action as string,
+      actor: req.query.actor as string,
+      targetType: req.query.targetType as string,
+      targetId: req.query.targetId as string,
+      since: req.query.since ? new Date(req.query.since as string) : undefined,
+      until: req.query.until ? new Date(req.query.until as string) : undefined
+    };
+    
+    const result = await getAuditLogs(options);
+    res.json(result);
+  } catch (e) {
+    console.error('Failed to get audit logs:', e);
+    res.status(500).json({ error: 'Failed to get audit logs' });
+  }
+});
+
+app.get('/api/audit/stats', async (req, res) => {
+  try {
+    const stats = await getAuditStats();
+    res.json(stats);
+  } catch (e) {
+    console.error('Failed to get audit stats:', e);
+    res.status(500).json({ error: 'Failed to get audit stats' });
+  }
+});
+
+app.get('/api/db/status', async (req, res) => {
+  const connected = await testConnection();
+  res.json({ 
+    connected,
+    status: connected ? 'healthy' : 'disconnected'
+  });
+});
 
 // ============== UI Routes ==============
 
