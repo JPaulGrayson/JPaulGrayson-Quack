@@ -31,6 +31,16 @@ import { QuackStore, Dispatcher } from '../packages/@quack/core/dist/index.js';
 import { handleMCPSSE, handleMCPMessage } from './mcp-handler.js';
 import { initFileStore, uploadFile, getFile, getFileMeta } from './file-store.js';
 import { initWebhooks, registerWebhook, removeWebhook, listWebhooks, triggerWebhooks } from './webhooks.js';
+import { 
+  initCoWorkStore, 
+  registerAgent, 
+  getAgent, 
+  getAllAgents, 
+  updateLastActivity,
+  getCoWorkStats,
+  deleteAgent,
+  shouldAutoApprove 
+} from './cowork-store.js';
 
 // ElevenLabs client for generating duck sounds
 const elevenlabs = process.env.ELEVENLABS_API_KEY 
@@ -60,6 +70,7 @@ app.use(express.static('public', {
 initStore();
 initFileStore();
 initWebhooks();
+initCoWorkStore();
 
 // Create QuackStore adapter for Dispatcher
 const storeAdapter: QuackStore = {
@@ -408,6 +419,83 @@ app.post('/api/dispatcher/webhook', (req, res) => {
   
   dispatcher.registerWebhook(agent, baseUrl);
   res.json({ success: true, agent, baseUrl });
+});
+
+// ============== COWORK API ==============
+
+// Register an agent
+app.post('/api/cowork/agents', (req, res) => {
+  try {
+    const { name, category, requiresApproval, autoApproveOnCheck, notifyVia, webhookUrl } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Missing required field: name' });
+    }
+    
+    const agent = registerAgent({
+      name,
+      category: category || 'autonomous',
+      requiresApproval: requiresApproval ?? false,
+      autoApproveOnCheck: autoApproveOnCheck ?? true,
+      notifyVia: notifyVia || 'polling',
+      webhookUrl,
+    });
+    
+    res.json({ success: true, agent });
+  } catch (err) {
+    console.error('Agent registration error:', err);
+    res.status(500).json({ error: 'Failed to register agent' });
+  }
+});
+
+// List all registered agents
+app.get('/api/cowork/agents', (req, res) => {
+  const agents = getAllAgents();
+  res.json({ agents, count: agents.length });
+});
+
+// Get a specific agent
+app.get('/api/cowork/agents/:name', (req, res) => {
+  const agent = getAgent(req.params.name);
+  
+  if (!agent) {
+    return res.status(404).json({ error: 'Agent not found' });
+  }
+  
+  res.json({ agent });
+});
+
+// Delete an agent
+app.delete('/api/cowork/agents/:name', (req, res) => {
+  const deleted = deleteAgent(req.params.name);
+  
+  if (!deleted) {
+    return res.status(404).json({ error: 'Agent not found' });
+  }
+  
+  res.json({ success: true, deleted: req.params.name });
+});
+
+// Get CoWork status
+app.get('/api/cowork/status', (req, res) => {
+  const stats = getCoWorkStats();
+  const msgStats = getStats();
+  
+  res.json({
+    agents: stats,
+    messages: {
+      pending: msgStats.pending,
+      approved: msgStats.approved,
+      inProgress: msgStats.inProgress,
+    },
+  });
+});
+
+// Ping endpoint - agents call this to update their "last seen" status
+app.post('/api/cowork/ping/:agent', (req, res) => {
+  const agentName = req.params.agent;
+  updateLastActivity(agentName);
+  res.json({ success: true, agent: agentName, timestamp: new Date().toISOString() });
 });
 
 // ============== FILE UPLOAD API ==============
