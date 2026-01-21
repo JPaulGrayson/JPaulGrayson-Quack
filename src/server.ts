@@ -379,6 +379,17 @@ app.post('/api/approve/:id', (req, res) => {
   
   const { userComment } = req.body || {};
   
+  // Check if this message is an automation request itself - prevent recursive loop
+  let isAutomationRequest = false;
+  try {
+    const parsed = JSON.parse(message.task || '');
+    if (parsed.action === 'notify-agent') {
+      isAutomationRequest = true;
+    }
+  } catch {
+    // Not JSON, not an automation request
+  }
+  
   // Get target agent's platform info for automation
   const targetAgentName = message.to.replace(/^\//, '').split('/')[0];
   const targetAgent = getAgent(targetAgentName);
@@ -394,7 +405,8 @@ app.post('/api/approve/:id', (req, res) => {
     ? `quack id:${shortId} "${userComment}"`
     : `quack id:${shortId}`;
   
-  if (claudeOnline && targetAgent?.platformUrl) {
+  // Skip automation for automation requests (prevent recursion)
+  if (claudeOnline && targetAgent?.platformUrl && !isAutomationRequest) {
     // Send automation request to Claude's inbox
     const automationRequest = {
       action: 'notify-agent',
