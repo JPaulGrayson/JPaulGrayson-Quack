@@ -905,11 +905,12 @@
       </div>
     </div>
 
-    <div class="view-toggle" style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem;">
+    <div class="view-toggle" style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
       <button class="btn btn-primary" id="inbox-view-btn" onclick="showInboxView()">📥 Inboxes</button>
       <button class="btn btn-secondary" id="thread-view-btn" onclick="showThreadView()">💬 Threads</button>
       <button class="btn btn-secondary" id="cowork-view-btn" onclick="showCoWorkView()">🤖 Agents</button>
       <button class="btn btn-secondary" id="routing-view-btn" onclick="showRoutingView()">🔀 CoWork</button>
+      <button class="btn btn-secondary" id="audit-view-btn" onclick="showAuditView()">📋 Audit</button>
     </div>
 
     <div class="inboxes" id="inboxes">
@@ -965,6 +966,43 @@
       <div class="routing-list" id="routing-list" style="display: flex; flex-direction: column; gap: 1rem;">
         <!-- CoWork routed messages will be rendered here -->
       </div>
+    </div>
+
+    <div class="audit-view" id="audit" style="display: none;">
+      <div class="cowork-stats" style="display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap;">
+        <div class="stat" style="background: rgba(156, 39, 176, 0.1); border-color: rgba(156, 39, 176, 0.3);">
+          <div class="stat-value" id="audit-total">-</div>
+          <div class="stat-label">Total Events</div>
+        </div>
+        <div class="stat" style="background: rgba(0, 217, 255, 0.1); border-color: rgba(0, 217, 255, 0.3);">
+          <div class="stat-value" id="audit-24h">-</div>
+          <div class="stat-label">Last 24h</div>
+        </div>
+        <div class="stat" style="background: rgba(76, 175, 80, 0.1); border-color: rgba(76, 175, 80, 0.3);">
+          <div class="stat-value" id="db-status">-</div>
+          <div class="stat-label">Database</div>
+        </div>
+      </div>
+      
+      <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; justify-content: center;">
+        <select id="audit-filter-action" onchange="loadAuditLogs()" style="padding: 0.5rem 1rem; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #e0e0e0;">
+          <option value="">All Actions</option>
+          <option value="message.send">message.send</option>
+          <option value="message.approve">message.approve</option>
+          <option value="message.complete">message.complete</option>
+          <option value="message.read">message.read</option>
+          <option value="message.status_change">message.status_change</option>
+          <option value="thread.archive">thread.archive</option>
+        </select>
+        <input type="text" id="audit-filter-actor" placeholder="Filter by actor..." onkeyup="debounceLoadAudit()" style="padding: 0.5rem 1rem; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #e0e0e0; width: 150px;">
+        <button class="btn btn-secondary" onclick="loadAuditLogs()">🔄 Refresh</button>
+      </div>
+      
+      <div class="audit-list" id="audit-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <!-- Audit logs will be rendered here -->
+      </div>
+      
+      <div id="audit-pagination" style="display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem;"></div>
     </div>
 
     <div class="setup-section">
@@ -1351,6 +1389,7 @@ GET /api/inbox/your-name to check replies</code>
       document.getElementById('threads').style.display = 'none';
       document.getElementById('cowork').style.display = 'none';
       document.getElementById('routing').style.display = 'none';
+      document.getElementById('audit').style.display = 'none';
       setActiveTab('inbox-view-btn');
     }
 
@@ -1360,6 +1399,7 @@ GET /api/inbox/your-name to check replies</code>
       document.getElementById('threads').style.display = 'grid';
       document.getElementById('cowork').style.display = 'none';
       document.getElementById('routing').style.display = 'none';
+      document.getElementById('audit').style.display = 'none';
       setActiveTab('thread-view-btn');
       loadThreads();
     }
@@ -1370,6 +1410,7 @@ GET /api/inbox/your-name to check replies</code>
       document.getElementById('threads').style.display = 'none';
       document.getElementById('cowork').style.display = 'block';
       document.getElementById('routing').style.display = 'none';
+      document.getElementById('audit').style.display = 'none';
       setActiveTab('cowork-view-btn');
       loadAgents();
     }
@@ -1380,6 +1421,7 @@ GET /api/inbox/your-name to check replies</code>
       document.getElementById('threads').style.display = 'none';
       document.getElementById('cowork').style.display = 'none';
       document.getElementById('routing').style.display = 'block';
+      document.getElementById('audit').style.display = 'none';
       setActiveTab('routing-view-btn');
       loadRoutingMessages();
     }
@@ -1521,6 +1563,125 @@ GET /api/inbox/your-name to check replies</code>
         console.error('Failed to forward message:', e);
         showToast('Failed to forward message', 'error');
       }
+    }
+
+    // ============== Audit View ==============
+    let auditOffset = 0;
+    const auditLimit = 50;
+    let auditDebounceTimer = null;
+    
+    function showAuditView() {
+      currentView = 'audit';
+      document.getElementById('inboxes').style.display = 'none';
+      document.getElementById('threads').style.display = 'none';
+      document.getElementById('cowork').style.display = 'none';
+      document.getElementById('routing').style.display = 'none';
+      document.getElementById('audit').style.display = 'block';
+      setActiveTab('audit-view-btn');
+      loadAuditStats();
+      loadAuditLogs();
+    }
+    
+    function debounceLoadAudit() {
+      if (auditDebounceTimer) clearTimeout(auditDebounceTimer);
+      auditDebounceTimer = setTimeout(loadAuditLogs, 300);
+    }
+    
+    async function loadAuditStats() {
+      try {
+        const [statsRes, dbRes] = await Promise.all([
+          fetch(`${API_BASE}/api/audit/stats`),
+          fetch(`${API_BASE}/api/db/status`)
+        ]);
+        
+        const stats = await statsRes.json();
+        const db = await dbRes.json();
+        
+        document.getElementById('audit-total').textContent = stats.totalEvents || 0;
+        document.getElementById('audit-24h').textContent = stats.last24Hours || 0;
+        document.getElementById('db-status').textContent = db.connected ? 'OK' : 'Error';
+        document.getElementById('db-status').style.color = db.connected ? '#4caf50' : '#f44336';
+      } catch (e) {
+        console.error('Failed to load audit stats:', e);
+      }
+    }
+    
+    async function loadAuditLogs() {
+      try {
+        const action = document.getElementById('audit-filter-action').value;
+        const actor = document.getElementById('audit-filter-actor').value.trim();
+        
+        let url = `${API_BASE}/api/audit/logs?limit=${auditLimit}&offset=${auditOffset}`;
+        if (action) url += `&action=${encodeURIComponent(action)}`;
+        if (actor) url += `&actor=${encodeURIComponent(actor)}`;
+        
+        const res = await fetch(url);
+        const { logs, total } = await res.json();
+        
+        const container = document.getElementById('audit-list');
+        
+        if (logs.length === 0) {
+          container.innerHTML = `<div style="text-align: center; color: #666; padding: 2rem;">No audit logs found</div>`;
+          return;
+        }
+        
+        container.innerHTML = logs.map(log => {
+          const time = new Date(log.timestamp).toLocaleString();
+          const actionColor = getActionColor(log.action);
+          const details = log.details ? Object.entries(log.details).map(([k, v]) => `${k}: ${v}`).join(', ') : '';
+          
+          return `
+            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+              <span style="color: #666; font-size: 0.8rem; min-width: 140px;">${time}</span>
+              <span style="background: ${actionColor}; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">${log.action}</span>
+              <span style="color: #00d9ff; font-weight: 500;">${escapeHtml(log.actor)}</span>
+              <span style="color: #888;">→</span>
+              <span style="color: #ffc107;">${log.targetType}:${log.targetId.substring(0, 8)}...</span>
+              ${details ? `<span style="color: #666; font-size: 0.8rem; flex: 1;">${escapeHtml(details)}</span>` : ''}
+            </div>
+          `;
+        }).join('');
+        
+        // Pagination
+        const totalPages = Math.ceil(total / auditLimit);
+        const currentPage = Math.floor(auditOffset / auditLimit) + 1;
+        
+        const pagination = document.getElementById('audit-pagination');
+        if (totalPages > 1) {
+          pagination.innerHTML = `
+            <button class="btn btn-secondary" onclick="auditPrevPage()" ${auditOffset === 0 ? 'disabled' : ''}>← Prev</button>
+            <span style="color: #888;">Page ${currentPage} of ${totalPages} (${total} total)</span>
+            <button class="btn btn-secondary" onclick="auditNextPage()" ${currentPage >= totalPages ? 'disabled' : ''}>Next →</button>
+          `;
+        } else {
+          pagination.innerHTML = total > 0 ? `<span style="color: #666;">${total} events</span>` : '';
+        }
+      } catch (e) {
+        console.error('Failed to load audit logs:', e);
+        document.getElementById('audit-list').innerHTML = `<div style="text-align: center; color: #f44336; padding: 2rem;">Failed to load audit logs</div>`;
+      }
+    }
+    
+    function getActionColor(action) {
+      const colors = {
+        'message.send': '#2196f3',
+        'message.approve': '#4caf50',
+        'message.complete': '#8bc34a',
+        'message.read': '#9e9e9e',
+        'message.status_change': '#ff9800',
+        'thread.archive': '#9c27b0'
+      };
+      return colors[action] || '#666';
+    }
+    
+    function auditPrevPage() {
+      auditOffset = Math.max(0, auditOffset - auditLimit);
+      loadAuditLogs();
+    }
+    
+    function auditNextPage() {
+      auditOffset += auditLimit;
+      loadAuditLogs();
     }
 
     async function openCoWorkModal() {
