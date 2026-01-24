@@ -3025,14 +3025,40 @@ GET /api/inbox/your-name to check replies</code>
     // Initialize Voyai session - REQUIRED for all users
     async function checkVoyaiAuth() {
       try {
-        const res = await fetch('https://voyai.org/api/quack/session', {
-          credentials: 'include'
+        // Check for incoming token from Voyai redirect
+        const urlParams = new URLSearchParams(window.location.search);
+        const incomingToken = urlParams.get('token');
+        const authSource = urlParams.get('source');
+        const authFlag = urlParams.get('auth');
+        
+        if (authFlag === 'true' && authSource === 'voyai' && incomingToken) {
+          console.log('Received auth token from Voyai redirect');
+          // Store the token
+          localStorage.setItem('voyai_token', incomingToken);
+          // Clean the URL (remove token for security)
+          const cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
+        
+        // Check for stored token first
+        const storedToken = localStorage.getItem('voyai_token');
+        
+        // Try session API with token if available
+        const sessionUrl = storedToken 
+          ? `https://voyai.org/api/quack/session?token=${encodeURIComponent(storedToken)}`
+          : 'https://voyai.org/api/quack/session';
+          
+        const res = await fetch(sessionUrl, {
+          credentials: 'include',
+          headers: storedToken ? { 'Authorization': `Bearer ${storedToken}` } : {}
         });
         const data = await res.json();
         
         if (!data.success || data.error) {
+          // Clear invalid token
+          localStorage.removeItem('voyai_token');
           // Not authenticated - redirect to Voyai login
-          const returnUrl = encodeURIComponent(window.location.href);
+          const returnUrl = encodeURIComponent(window.location.origin + window.location.pathname);
           window.location.href = `https://voyai.org/login?return_to=${returnUrl}`;
           return null;
         }
@@ -3043,8 +3069,10 @@ GET /api/inbox/your-name to check replies</code>
         return data;
       } catch (e) {
         console.error('Voyai auth check failed:', e);
+        // Clear token on error
+        localStorage.removeItem('voyai_token');
         // Redirect to login on error
-        const returnUrl = encodeURIComponent(window.location.href);
+        const returnUrl = encodeURIComponent(window.location.origin + window.location.pathname);
         window.location.href = `https://voyai.org/login?return_to=${returnUrl}`;
         return null;
       }
