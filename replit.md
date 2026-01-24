@@ -27,11 +27,17 @@ The system uses **Express.js** with TypeScript (Node.js) and `tsx` for execution
 
 ### Frontend
 A static HTML/CSS/JS dashboard in `public/` provides a real-time inbox monitoring interface. Features include:
--   **Dashboard Views**: Toggles between Inbox, Thread, and CoWork Agents views.
+-   **Dashboard Views**: Toggles between Inbox, Threads, Agents, CoWork, Sessions, and Audit views.
 -   **Hierarchical Inbox UI**: Organizes inboxes with collapsible parent/child structures.
 -   **Notifications**: Sound notifications (ElevenLabs generated) and browser notifications for new messages, with user settings.
 -   **Mission Control**: Button to open Quack and Claude.ai side-by-side for approval workflows.
+-   **Sessions Tab**: Agent sign-in flow to generate start scripts, view active context recovery sessions, and manage agent connections.
 -   **Audit Tab**: Interface to view and filter system events and database health.
+-   **Quick Start Section**: Inline documentation with Context Recovery instructions at the bottom of the dashboard.
+
+### Documentation
+-   **Setup Guide** (`/setup`): Platform-specific integration guides (Claude.ai, Replit, Cursor, ChatGPT, MCP) with copy-to-clipboard code blocks.
+-   **Context Recovery Docs**: Full documentation for the Flight Recorder feature including agent sign-in, checkpoints, and session management.
 
 ### `@quack/core` Package
 A reusable npm package extracted from the core system (`@quack/core`) provides:
