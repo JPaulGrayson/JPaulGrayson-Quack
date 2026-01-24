@@ -56,6 +56,7 @@ const pool = new Pool({
 
 export async function initContextRecoveryTables(): Promise<void> {
   try {
+    // Create tables first
     await pool.query(`
       CREATE TABLE IF NOT EXISTS context_sessions (
         session_id VARCHAR(255) PRIMARY KEY,
@@ -76,12 +77,22 @@ export async function initContextRecoveryTables(): Promise<void> {
         target_agent VARCHAR(255),
         tags JSONB
       );
-      
+    `);
+    
+    // Add is_active column if it doesn't exist (for existing tables)
+    await pool.query(`
+      ALTER TABLE context_sessions ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+    `);
+    
+    // Create indexes after column exists
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_ctx_logs_session ON context_audit_logs(session_id);
       CREATE INDEX IF NOT EXISTS idx_ctx_logs_agent ON context_audit_logs(agent_id);
       CREATE INDEX IF NOT EXISTS idx_ctx_logs_timestamp ON context_audit_logs(timestamp DESC);
       CREATE INDEX IF NOT EXISTS idx_ctx_sessions_agent ON context_sessions(agent_id);
+      CREATE INDEX IF NOT EXISTS idx_ctx_sessions_active ON context_sessions(agent_id, is_active);
     `);
+    
     console.log('🧠 Context Recovery tables initialized');
   } catch (error) {
     console.error('Failed to init context recovery tables:', error);
@@ -89,25 +100,51 @@ export async function initContextRecoveryTables(): Promise<void> {
 }
 
 async function getOrCreateSession(agentId: string, sessionId?: string): Promise<string> {
-  const id = sessionId || uuidv4();
-  
-  const existing = await pool.query(
-    'SELECT session_id FROM context_sessions WHERE session_id = $1',
-    [id]
-  );
-  
-  if (existing.rows.length > 0) {
-    return id;
+  // If explicit session_id provided, use it
+  if (sessionId) {
+    const existing = await pool.query(
+      'SELECT session_id FROM context_sessions WHERE session_id = $1',
+      [sessionId]
+    );
+    
+    if (existing.rows.length > 0) {
+      return sessionId;
+    }
+    
+    // Create new session with provided ID
+    await pool.query(
+      `INSERT INTO context_sessions (session_id, agent_id, created_at, last_activity, entry_count, is_active)
+       VALUES ($1, $2, NOW(), NOW(), 0, true)
+       ON CONFLICT (session_id) DO NOTHING`,
+      [sessionId, agentId]
+    );
+    return sessionId;
   }
   
-  await pool.query(
-    `INSERT INTO context_sessions (session_id, agent_id, created_at, last_activity, entry_count)
-     VALUES ($1, $2, NOW(), NOW(), 0)
-     ON CONFLICT (session_id) DO NOTHING`,
-    [id, agentId]
+  // Look for existing ACTIVE session for this agent (active within last 24 hours)
+  const activeSession = await pool.query(
+    `SELECT session_id FROM context_sessions 
+     WHERE agent_id = $1 
+       AND is_active = true 
+       AND last_activity > NOW() - INTERVAL '24 hours'
+     ORDER BY last_activity DESC 
+     LIMIT 1`,
+    [agentId]
   );
   
-  return id;
+  if (activeSession.rows.length > 0) {
+    return activeSession.rows[0].session_id;
+  }
+  
+  // No active session - create new one
+  const newId = uuidv4();
+  await pool.query(
+    `INSERT INTO context_sessions (session_id, agent_id, created_at, last_activity, entry_count, is_active)
+     VALUES ($1, $2, NOW(), NOW(), 0, true)`,
+    [newId, agentId]
+  );
+  
+  return newId;
 }
 
 export async function saveJournalEntry(entry: AuditLogCreate): Promise<AuditLogEntry> {
@@ -305,4 +342,41 @@ GOAL: ${context.summary?.immediate_goal || 'Continue work'}
   }
   
   return base;
+}
+
+export async function closeSession(sessionId: string): Promise<{ success: boolean; message: string }> {
+  const result = await pool.query(
+    `UPDATE context_sessions SET is_active = false, last_activity = NOW() WHERE session_id = $1 RETURNING session_id`,
+    [sessionId]
+  );
+  
+  if (result.rows.length === 0) {
+    return { success: false, message: 'Session not found' };
+  }
+  
+  return { success: true, message: `Session ${sessionId} closed` };
+}
+
+export async function closeAgentSessions(agentId: string): Promise<{ success: boolean; count: number }> {
+  const result = await pool.query(
+    `UPDATE context_sessions SET is_active = false, last_activity = NOW() WHERE agent_id = $1 AND is_active = true RETURNING session_id`,
+    [agentId]
+  );
+  
+  return { success: true, count: result.rows.length };
+}
+
+export async function startNewSession(agentId: string): Promise<string> {
+  // Close any existing active sessions for this agent
+  await closeAgentSessions(agentId);
+  
+  // Create new session
+  const newId = uuidv4();
+  await pool.query(
+    `INSERT INTO context_sessions (session_id, agent_id, created_at, last_activity, entry_count, is_active)
+     VALUES ($1, $2, NOW(), NOW(), 0, true)`,
+    [newId, agentId]
+  );
+  
+  return newId;
 }

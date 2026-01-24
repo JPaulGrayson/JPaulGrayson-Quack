@@ -63,6 +63,9 @@ import {
   getContextForSession,
   getContextForAgent,
   generateUniversalScript,
+  closeSession,
+  closeAgentSessions,
+  startNewSession,
   AuditLogCreate
 } from './context-recovery.js';
 
@@ -1298,6 +1301,36 @@ app.post('/api/v1/agent/checkpoint', async (req, res) => {
     }
     const logEntry = await saveJournalEntry({ agent_id, type: 'CHECKPOINT', content, session_id, context_snapshot });
     res.json(logEntry);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/v1/agent/session/close/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const result = await closeSession(sessionId);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/v1/agent/session/close-all/:agentId', async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    const result = await closeAgentSessions(agentId);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/v1/agent/session/new/:agentId', async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    const sessionId = await startNewSession(agentId);
+    res.json({ success: true, session_id: sessionId, agent_id: agentId });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
