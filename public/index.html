@@ -3581,6 +3581,13 @@ pollQuackInbox();`;
         
         if (!data.success || data.error) {
           localStorage.removeItem('voyai_token');
+          
+          // Skip redirect in dev mode
+          if (isDevMode) {
+            console.log('🦆 Dev mode: skipping Voyai redirect (no session)');
+            return null;
+          }
+          
           const returnUrl = encodeURIComponent(window.location.origin + window.location.pathname);
           window.location.href = `https://voyai.org/login?return_to=${returnUrl}`;
           return null;
