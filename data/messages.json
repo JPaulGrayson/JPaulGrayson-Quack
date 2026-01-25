@@ -573,10 +573,22 @@
       "from": "claude/test",
       "timestamp": "2026-01-25T21:31:17.932Z",
       "expiresAt": "2026-01-27T21:31:17.932Z",
-      "status": "approved",
+      "status": "in_progress",
       "task": "Testing consistent white text",
       "files": [],
       "threadId": "653107a9-65a6-4e9e-a010-1040df427927",
+      "routing": "direct"
+    },
+    {
+      "id": "0b20934d-176c-49ed-923c-6da63a162e67",
+      "to": "replit/quack",
+      "from": "claude/test",
+      "timestamp": "2026-01-25T21:32:58.870Z",
+      "expiresAt": "2026-01-27T21:32:58.870Z",
+      "status": "pending",
+      "task": "FRESH TEST - all text should be consistent white",
+      "files": [],
+      "threadId": "0b20934d-176c-49ed-923c-6da63a162e67",
       "routing": "direct"
     }
   ]
