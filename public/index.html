@@ -2299,22 +2299,34 @@ curl -X POST "${API_BASE}/api/context/checkpoint" \\
 
 // Step 5: CONTINUOUS MONITORING (Keep Listening!)
 // Poll your inbox every 30 seconds to stay responsive:
-//
-// async function pollQuackInbox() {
-//   const INBOX_URL = "${API_BASE}/api/inbox/${encodeURIComponent(agentId)}";
-//   while (true) {
-//     const res = await fetch(INBOX_URL);
-//     const data = await res.json();
-//     if (data.count > 0) {
-//       console.log("🦆 QUACK!", data.count, "message(s)!");
-//       // Process pending/approved messages here
-//     }
-//     await new Promise(r => setTimeout(r, 30000));
-//   }
-// }
-// pollQuackInbox();
-//
-// Or: Check inbox periodically during work and respond to new messages.`;
+
+async function pollQuackInbox() {
+  const INBOX_URL = "${API_BASE}/api/inbox/${encodeURIComponent(agentId)}";
+  const POLL_INTERVAL = 30000;
+  
+  console.log("🦆 Starting Quack inbox monitor...");
+  
+  while (true) {
+    try {
+      const res = await fetch(INBOX_URL);
+      const data = await res.json();
+      if (data.count > 0) {
+        console.log("🦆 QUACK!", data.count, "message(s) in inbox!");
+        for (const msg of data.messages) {
+          if (msg.status === "pending" || msg.status === "approved") {
+            console.log("  From:", msg.from);
+            console.log("  Task:", msg.task);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Polling error:", err);
+    }
+    await new Promise(r => setTimeout(r, POLL_INTERVAL));
+  }
+}
+
+pollQuackInbox();`;
 
         resultDiv.innerHTML = `
           <div style="background: #0d1a2a; border: 1px solid #3a4a5a; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
