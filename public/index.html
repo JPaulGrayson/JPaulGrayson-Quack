@@ -2771,6 +2771,15 @@ pollQuackInbox();`;
       // Store raw prompt for copy
       currentNotifyPrompt = prompt;
       
+      // Auto-copy to clipboard immediately
+      let clipboardSuccess = false;
+      navigator.clipboard.writeText(prompt).then(() => {
+        clipboardSuccess = true;
+        console.log('🦆 Prompt auto-copied to clipboard:', prompt);
+      }).catch(err => {
+        console.log('🦆 Auto-copy failed (user can click Copy button):', err.message);
+      });
+      
       const toast = document.createElement('div');
       toast.className = 'toast';
       toast.style.borderColor = '#4caf50';
@@ -2778,9 +2787,13 @@ pollQuackInbox();`;
       const header = document.createElement('div');
       header.className = 'toast-header';
       header.innerHTML = `
-        <span class="toast-title" style="color: #4caf50;">✓ Approved! Notify ${escapeHtml(agentName)}</span>
+        <span class="toast-title" style="color: #4caf50;">✓ Approved! Opening ${escapeHtml(agentName)} platform...</span>
         <button class="toast-close" onclick="this.closest('.toast').remove()">×</button>
       `;
+      
+      const statusMsg = document.createElement('div');
+      statusMsg.style.cssText = 'color: #aaa; font-size: 0.85em; margin-bottom: 0.5rem;';
+      statusMsg.textContent = '📋 Prompt copied to clipboard • 🔗 Platform opened in new tab';
       
       const body = document.createElement('div');
       body.className = 'toast-body';
@@ -2794,7 +2807,7 @@ pollQuackInbox();`;
       const copyBtn = document.createElement('button');
       copyBtn.className = 'btn btn-primary';
       copyBtn.style.background = '#4caf50';
-      copyBtn.textContent = '📋 Copy';
+      copyBtn.textContent = '📋 Copy Again';
       copyBtn.onclick = function() { copyCurrentNotifyPrompt(this); };
       actions.appendChild(copyBtn);
       
@@ -2803,12 +2816,13 @@ pollQuackInbox();`;
         const openBtn = document.createElement('button');
         openBtn.className = 'btn btn-primary';
         openBtn.style.background = '#2196f3';
-        openBtn.textContent = '🔗 Open';
+        openBtn.textContent = '🔗 Open Again';
         openBtn.onclick = function() { window.open(platformUrl, '_blank'); };
         actions.appendChild(openBtn);
       }
       
       toast.appendChild(header);
+      toast.appendChild(statusMsg);
       toast.appendChild(body);
       toast.appendChild(actions);
       container.appendChild(toast);
