@@ -3286,9 +3286,8 @@ pollQuackInbox();`;
       previousMessageCount = newCount;
     }
 
-    // Track which toasts have been shown
+    // Track which toasts have been shown (resets on page reload)
     const shownToastIds = new Set();
-    let initialLoadComplete = false;
 
     async function showNewMessageToasts(showAllPending = false) {
       try {
@@ -3319,9 +3318,6 @@ pollQuackInbox();`;
     
     // Show pending message toasts after auth
     async function showPendingToastsOnLoad() {
-      if (initialLoadComplete) return;
-      initialLoadComplete = true;
-      
       try {
         await showNewMessageToasts(true);
       } catch (e) {
