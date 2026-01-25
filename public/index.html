@@ -2689,12 +2689,30 @@ pollQuackInbox();`;
       closeModal();
     }
 
+    // Track in-progress approvals to prevent double-clicks
+    const approvingMessages = new Set();
+    
     // Approve message (for Orchestrate workflow) - with automation support
     async function approveMsg(messageId) {
+      // Prevent double-clicks
+      if (approvingMessages.has(messageId)) {
+        console.log('🦆 Already approving message, ignoring duplicate click');
+        return;
+      }
+      approvingMessages.add(messageId);
+      
       try {
         // Approve the message and get automation status
         const res = await fetch(`${API_BASE}/api/approve/${messageId}`, { method: 'POST' });
         const data = await res.json();
+        
+        // Check if approval failed
+        if (!res.ok) {
+          console.log('🦆 Approval failed:', data.error);
+          approvingMessages.delete(messageId);
+          return;
+        }
+        
         playQuackSound('send');
         
         // Show automation status
@@ -2715,6 +2733,8 @@ pollQuackInbox();`;
         }
       } catch (e) {
         console.error('Failed to approve:', e);
+      } finally {
+        approvingMessages.delete(messageId);
       }
       
       loadStats();
@@ -3365,9 +3385,31 @@ pollQuackInbox();`;
     }
 
     async function approveFromToast(messageId, toast) {
+      // Prevent double-clicks
+      if (toast.dataset.approving === 'true') {
+        console.log('🦆 Already approving, ignoring duplicate click');
+        return;
+      }
+      toast.dataset.approving = 'true';
+      
+      // Disable the approve button immediately
+      const approveBtn = toast.querySelector('.btn-primary');
+      if (approveBtn) {
+        approveBtn.disabled = true;
+        approveBtn.textContent = 'Approving...';
+      }
+      
       try {
         const res = await fetch(`${API_BASE}/api/approve/${messageId}`, { method: 'POST' });
         const data = await res.json();
+        
+        // Check if approval failed (already approved)
+        if (!res.ok) {
+          console.log('🦆 Approval failed:', data.error);
+          toast.remove();
+          return;
+        }
+        
         console.log('🦆 APPROVAL RESPONSE:', JSON.stringify(data));
         toast.remove();
         
