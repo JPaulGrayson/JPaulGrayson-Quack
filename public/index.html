@@ -2707,6 +2707,11 @@ pollQuackInbox();`;
           } else if (data.platformUrl) {
             showApprovalToast('target agent', data.platformUrl);
           }
+          
+          // Auto-open agent's platform tab and copy prompt
+          if (data.platformUrl) {
+            autoOpenAgentPlatform(data.platformUrl);
+          }
         }
       } catch (e) {
         console.error('Failed to approve:', e);
@@ -2715,6 +2720,25 @@ pollQuackInbox();`;
       loadStats();
       loadInboxes();
       closeModal();
+    }
+    
+    // Auto-open agent platform tab and copy quack prompt to clipboard
+    async function autoOpenAgentPlatform(platformUrl) {
+      // Copy prompt to clipboard first
+      try {
+        await navigator.clipboard.writeText('Check your Quack inbox');
+      } catch (e) {
+        // Fallback
+        const textarea = document.createElement('textarea');
+        textarea.value = 'Check your Quack inbox';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      
+      // Open the platform in new tab (or focus if already open)
+      window.open(platformUrl, '_blank');
     }
     
     // Store notify prompt for copy button (avoid escaping issues)
@@ -3351,6 +3375,8 @@ pollQuackInbox();`;
           showAutomationToast('Claude is handling the notification automatically!');
         } else if (data.automation === 'manual' && data.platformUrl) {
           showNotifyPromptToast(data.notifyPrompt || data.prompt, 'target agent', data.platformUrl);
+          // Auto-open agent's platform tab and copy prompt
+          autoOpenAgentPlatform(data.platformUrl);
         }
         
         loadStats();
