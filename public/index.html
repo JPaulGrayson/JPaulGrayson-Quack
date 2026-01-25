@@ -3414,8 +3414,14 @@ pollQuackInbox();`;
         toast.remove();
         
         // Show automation status based on type
-        if (data.automation === 'requested') {
-          console.log('🦆 FLOW: Automation requested - showing automation toast');
+        if (data.automation === 'requested' && data.platformUrl) {
+          console.log('🦆 FLOW: Automation requested - showing notify toast & opening platform');
+          console.log('🦆 platformUrl:', data.platformUrl);
+          console.log('🦆 notifyPrompt:', data.notifyPrompt);
+          showNotifyPromptToast(data.notifyPrompt || data.prompt, 'target agent', data.platformUrl);
+          autoOpenAgentPlatform(data.platformUrl);
+        } else if (data.automation === 'requested') {
+          console.log('🦆 FLOW: Automation requested (no platformUrl) - showing info toast');
           showAutomationToast('Claude is handling the notification automatically!');
         } else if (data.automation === 'ping' && data.platformUrl) {
           console.log('🦆 FLOW: Ping with platformUrl - showing notify toast & opening platform');

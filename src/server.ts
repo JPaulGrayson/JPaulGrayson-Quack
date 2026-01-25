@@ -463,7 +463,9 @@ app.post('/api/approve/:id', (req, res) => {
       success: true,
       message,
       automation: 'requested',
-      prompt
+      prompt,
+      platformUrl: targetAgent.platformUrl,
+      notifyPrompt: targetAgent.notifyPrompt
     });
   }
   

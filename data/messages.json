@@ -128,6 +128,18 @@
       "files": [],
       "threadId": "54eccc3f-4529-41ab-8424-b0313550c8fa",
       "routing": "direct"
+    },
+    {
+      "id": "e2f99d06-3ef6-4461-b892-66f4e5123600",
+      "to": "replit/quack",
+      "from": "claude/test2",
+      "timestamp": "2026-01-25T20:44:12.969Z",
+      "expiresAt": "2026-01-27T20:44:12.969Z",
+      "status": "pending",
+      "task": "NEW TEST: Click Approve - platform should open and clipboard should copy",
+      "files": [],
+      "threadId": "e2f99d06-3ef6-4461-b892-66f4e5123600",
+      "routing": "direct"
     }
   ]
 }
