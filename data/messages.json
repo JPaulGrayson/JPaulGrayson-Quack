@@ -14,6 +14,19 @@
       "project": "inbox",
       "priority": "high",
       "routing": "direct"
+    },
+    {
+      "id": "da78b511-d8a6-4027-bc47-f60610e20d91",
+      "to": "claude",
+      "from": "test/user",
+      "timestamp": "2026-01-25T18:24:06.642Z",
+      "expiresAt": "2026-01-27T18:24:06.642Z",
+      "status": "pending",
+      "task": "Test pending message for toast",
+      "files": [],
+      "threadId": "da78b511-d8a6-4027-bc47-f60610e20d91",
+      "project": "inbox",
+      "routing": "direct"
     }
   ]
 }

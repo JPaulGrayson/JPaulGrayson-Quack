@@ -3322,19 +3322,15 @@ pollQuackInbox();`;
       if (initialLoadComplete) return;
       initialLoadComplete = true;
       
-      console.log('🦆 showPendingToastsOnLoad called');
-      
-      // Small delay to let page render first
-      setTimeout(async () => {
-        console.log('🦆 Fetching pending messages for toasts...');
+      try {
         await showNewMessageToasts(true);
-      }, 1500);
+      } catch (e) {
+        console.error('Toast error:', e);
+      }
     }
 
     function showToast(message) {
-      console.log('🦆 showToast called for:', message.id);
       const container = document.getElementById('toast-container');
-      console.log('🦆 Toast container found:', !!container);
       
       // Double-check: don't show if a toast with this ID already exists in DOM
       if (container.querySelector(`[data-id="${message.id}"]`)) {
@@ -3366,9 +3362,6 @@ pollQuackInbox();`;
       `;
       
       container.appendChild(toast);
-      console.log('🦆 Toast appended to DOM for message:', message.id);
-      
-      // No auto-dismiss - user must click to close or take action
     }
 
     function closeToast(toast) {
@@ -3503,7 +3496,13 @@ pollQuackInbox();`;
     loadStats();
     loadInboxes();
     
-    // NOTE: showPendingToastsOnLoad() is called after Voyai auth completes (in checkVoyaiAuth)
+    // For dev/localhost: show toasts immediately (no Voyai auth needed)
+    // For production: toasts are shown after Voyai auth completes
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      console.log('🦆 Dev mode: showing pending toasts immediately');
+      showPendingToastsOnLoad();
+    }
     
     // Initialize Voyai session
     async function checkVoyaiAuth() {
@@ -3550,6 +3549,14 @@ pollQuackInbox();`;
       } catch (e) {
         console.error('Voyai auth check failed:', e);
         localStorage.removeItem('voyai_token');
+        
+        // Skip redirect on localhost for dev testing
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocalhost) {
+          console.log('🦆 Dev mode: skipping Voyai redirect for testing');
+          return null;
+        }
+        
         const returnUrl = encodeURIComponent(window.location.origin + window.location.pathname);
         window.location.href = `https://voyai.org/login?return_to=${returnUrl}`;
         return null;
