@@ -36,7 +36,7 @@ A static HTML/CSS/JS dashboard in `public/` provides a real-time inbox monitorin
 -   **GPT Proxy Toggle**: Dashboard button to start/stop the GPT proxy that monitors `gpt/main` inbox.
 -   **Sessions Tab**: Agent sign-in flow to generate start scripts, view active context recovery sessions, and manage agent connections.
 -   **Audit Tab**: Interface to view and filter system events and database health.
--   **Quick Start Section**: Inline documentation with Context Recovery instructions at the bottom of the dashboard.
+-   **Voyai Authentication**: Users must log in via Voyai (voyai.org) to access the dashboard. Supports free/premium tier gating.
 
 ### Documentation
 -   **Setup Guide** (`/setup`): Platform-specific integration guides (Claude.ai, Replit, Cursor, ChatGPT, MCP) with copy-to-clipboard code blocks.
