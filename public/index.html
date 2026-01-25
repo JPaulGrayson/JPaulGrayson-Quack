@@ -2822,12 +2822,12 @@ pollQuackInbox();`;
       `;
       
       const statusMsg = document.createElement('div');
-      statusMsg.style.cssText = 'color: #aaa; font-size: 0.85em; margin-bottom: 0.5rem;';
+      statusMsg.style.cssText = 'color: #fff; font-size: 0.85em; margin-bottom: 0.5rem;';
       statusMsg.textContent = '📋 Prompt copied to clipboard • 🔗 Platform opened in new tab';
       
       const body = document.createElement('div');
       body.className = 'toast-body';
-      body.style.cssText = 'font-family: monospace; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0;';
+      body.style.cssText = 'font-family: monospace; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0; color: #fff;';
       body.textContent = clipboardMessage;
       
       // Tip section for Refresh Quack and Context Recovery
