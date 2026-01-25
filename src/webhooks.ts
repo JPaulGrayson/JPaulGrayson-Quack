@@ -121,19 +121,20 @@ export function listWebhooks(): Webhook[] {
   return Array.from(webhooks.values());
 }
 
-export async function triggerWebhooks(inbox: string, message: any): Promise<void> {
+export async function triggerWebhooks(inbox: string, message: any, eventType: 'message.received' | 'message.approved' = 'message.received'): Promise<void> {
   const hooks = getWebhooksForInbox(inbox);
   
   for (const hook of hooks) {
     try {
       const payload = {
-        event: 'message.received',
+        event: eventType,
         inbox,
         message: {
           id: message.id,
           from: message.from,
           task: message.task,
           timestamp: message.timestamp,
+          status: message.status,
           hasFiles: message.files?.length > 0,
         },
       };

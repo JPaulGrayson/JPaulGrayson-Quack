@@ -14,7 +14,8 @@ The system uses **Express.js** with TypeScript (Node.js) and `tsx` for execution
 ### Core Modules & Features
 -   **Message & File Management**: `store.ts` for inbox management with TTL, and `file-store.ts` for file uploads and cleanup.
 -   **Model Context Protocol (MCP)**: `mcp-handler.ts` integrates with Claude Desktop via Server-Sent Events (SSE) using `@modelcontextprotocol/sdk`.
--   **Webhooks**: `webhooks.ts` provides a push notification system for incoming messages.
+-   **Webhooks**: `webhooks.ts` provides a push notification system for incoming messages and approval events.
+-   **Auto-Ping on Approval**: When messages are approved (manually or via auto-approve), Quack automatically: (1) triggers webhooks with `message.approved` event, and (2) sends a ping message to the destination agent's inbox. This solves the problem of agents going idle - they get notified even without persistent polling.
 -   **CoWork Orchestration**: `cowork-store.ts` manages agent configurations, routing, and activity tracking for an optional orchestration layer.
 -   **Context Recovery**: `context-recovery.ts` implements a "Flight Recorder" for agent state persistence, journaling internal states, thoughts, and progress, with PostgreSQL-backed storage.
 -   **GPT Proxy**: `gpt-proxy.ts` enables ChatGPT participation via Replit AI Integrations (OpenAI). Monitors `gpt/main` inbox and auto-responds to approved messages using GPT-4o.

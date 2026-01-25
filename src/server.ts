@@ -399,6 +399,11 @@ app.post('/api/approve/:id', (req, res) => {
     return res.status(500).json({ success: false, error: 'Failed to approve message' });
   }
   
+  // AUTO-PING: Trigger webhooks for the destination inbox on approval
+  triggerWebhooks(message.to, message, 'message.approved').catch(err => {
+    console.error('Approval webhook trigger error:', err);
+  });
+  
   const { userComment } = req.body || {};
   
   // Check if this message is an automation request itself - prevent recursive loop
@@ -462,14 +467,35 @@ app.post('/api/approve/:id', (req, res) => {
     });
   }
   
-  // Fallback: Claude not online, return info for manual notification
+  // AUTO-PING FALLBACK: Send ping message to agent's inbox if no webhook registered
+  // This wakes up agents when they next check their inbox
+  if (!isAutomationRequest && message.to !== 'claude' && message.to !== 'quack/system') {
+    const pingMessage = {
+      to: message.to,
+      from: 'quack/ping',
+      task: `🔔 PING: Message approved! ID: ${shortId}. From: ${message.from}. Task: "${message.task?.substring(0, 80)}..."`,
+      priority: 'high' as const,
+      tags: ['ping', 'auto-notification']
+    };
+    
+    // Don't await - fire and forget
+    try {
+      sendMessage(pingMessage, 'quack/ping');
+      console.log(`🔔 Auto-ping sent to ${message.to} for approved message ${shortId}`);
+    } catch (err) {
+      console.error('Auto-ping error:', err);
+    }
+  }
+  
+  // Return response with notification status
   res.json({
     success: true,
     message,
-    automation: 'manual',
+    automation: claudeOnline && isTargetAutonomous ? 'webhook' : 'ping',
     prompt,
     platformUrl: targetAgent?.platformUrl,
-    notifyPrompt: targetAgent?.notifyPrompt
+    notifyPrompt: targetAgent?.notifyPrompt,
+    pingDelivered: true
   });
 });
 
