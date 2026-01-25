@@ -98,6 +98,18 @@
       "files": [],
       "threadId": "1b1b84c2-eea1-4f27-a2e3-478328d2e527",
       "routing": "direct"
+    },
+    {
+      "id": "54eccc3f-4529-41ab-8424-b0313550c8fa",
+      "to": "replit/quack",
+      "from": "claude/test",
+      "timestamp": "2026-01-25T19:22:28.316Z",
+      "expiresAt": "2026-01-27T19:22:28.316Z",
+      "status": "pending",
+      "task": "DEV TEST: Click Approve to see platform open + prompt copy",
+      "files": [],
+      "threadId": "54eccc3f-4529-41ab-8424-b0313550c8fa",
+      "routing": "direct"
     }
   ]
 }
