@@ -3286,11 +3286,11 @@ pollQuackInbox();`;
       previousMessageCount = newCount;
     }
 
-    // Only show toasts for messages that arrive AFTER page load
-    const pageLoadTime = new Date();
+    // Track which toasts have been shown
     const shownToastIds = new Set();
+    let initialLoadComplete = false;
 
-    async function showNewMessageToasts() {
+    async function showNewMessageToasts(showAllPending = false) {
       try {
         const res = await fetch(`${API_BASE}/api/inboxes`);
         const { inboxes } = await res.json();
@@ -3300,9 +3300,9 @@ pollQuackInbox();`;
           const { messages } = await inboxRes.json();
           
           for (const msg of messages) {
-            const msgTime = new Date(msg.timestamp);
-            // Only show toast if: pending, not shown before, AND arrived after page load
-            if (msg.status === 'pending' && !shownToastIds.has(msg.id) && msgTime > pageLoadTime) {
+            // Show toast if: pending AND not shown before
+            // On initial load (showAllPending=true): show ALL pending messages
+            if (msg.status === 'pending' && !shownToastIds.has(msg.id)) {
               shownToastIds.add(msg.id);
               showToast(msg);
             }
@@ -3311,6 +3311,17 @@ pollQuackInbox();`;
       } catch (e) {
         console.log('Could not fetch new messages for toast:', e);
       }
+    }
+    
+    // Show pending message toasts on page load
+    async function showPendingToastsOnLoad() {
+      if (initialLoadComplete) return;
+      initialLoadComplete = true;
+      
+      // Small delay to let page render first
+      setTimeout(async () => {
+        await showNewMessageToasts(true);
+      }, 1500);
     }
 
     function showToast(message) {
@@ -3481,6 +3492,9 @@ pollQuackInbox();`;
     initializeMessageCount();
     loadStats();
     loadInboxes();
+    
+    // Show toasts for any pending messages after page load
+    showPendingToastsOnLoad();
     
     // Initialize Voyai session
     async function checkVoyaiAuth() {
