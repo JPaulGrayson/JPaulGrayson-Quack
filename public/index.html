@@ -2744,6 +2744,23 @@ pollQuackInbox();`;
     
     // Auto-open agent platform tab and copy quack prompt to clipboard
     async function autoOpenAgentPlatform(platformUrl) {
+      // Check if we're already on this platform (avoid duplicate tabs)
+      const currentHost = window.location.hostname;
+      try {
+        const targetUrl = new URL(platformUrl);
+        const targetHost = targetUrl.hostname;
+        
+        // If target is same site or both are Quack/Replit, skip opening
+        if (currentHost === targetHost || 
+            (currentHost.includes('replit') && targetHost.includes('replit')) ||
+            (currentHost.includes('quack') && targetHost.includes('quack'))) {
+          console.log('🦆 Already on target platform, skipping duplicate tab');
+          return; // Don't open - we're already here
+        }
+      } catch (e) {
+        console.log('🦆 Could not parse platformUrl:', e.message);
+      }
+      
       // Copy prompt to clipboard first
       try {
         await navigator.clipboard.writeText('Check your Quack inbox');
@@ -2757,7 +2774,7 @@ pollQuackInbox();`;
         document.body.removeChild(textarea);
       }
       
-      // Open the platform in new tab (or focus if already open)
+      // Open the platform in new tab
       window.open(platformUrl, '_blank');
     }
     
