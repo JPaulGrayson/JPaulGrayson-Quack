@@ -1,7 +1,12 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Router, Request, Response } from 'express';
 import { Server } from 'http';
-import { sendMessage } from './store.js';
+import { sendMessage, validateInboxPath, approveMessage } from './store.js';
+import { logAudit } from './db.js';
+import crypto from 'crypto';
+
+const BRIDGE_SECRET = process.env.BRIDGE_SECRET || '';
+const ALLOW_DEV_BYPASS = process.env.BRIDGE_DEV_BYPASS === 'true';
 
 interface AgentInfo {
   capabilities: string[];
@@ -113,7 +118,7 @@ export class QuackBridge {
   }
 
   private handleAuth(ws: ExtendedWebSocket, message: BridgeMessage): void {
-    const { agent_id, capabilities = [] } = message;
+    const { agent_id, capabilities = [], token } = message;
     
     if (!agent_id) {
       this.sendError(ws, 'agent_id required for authentication');
@@ -122,6 +127,12 @@ export class QuackBridge {
     
     if (!agent_id.includes('/')) {
       this.sendError(ws, 'agent_id must be in format: platform/name');
+      return;
+    }
+    
+    if (!this.verifyToken(token, agent_id)) {
+      this.sendError(ws, 'Invalid or missing authentication token');
+      console.log(`[Bridge] Auth rejected for ${agent_id}: invalid token`);
       return;
     }
     
@@ -154,6 +165,44 @@ export class QuackBridge {
     });
     
     this.broadcastPresence(agent_id, 'online');
+  }
+
+  private verifyToken(token: string | undefined, agentId: string): boolean {
+    if (ALLOW_DEV_BYPASS) {
+      console.log(`[Bridge] Dev bypass enabled: allowing connection for ${agentId}`);
+      return true;
+    }
+    
+    if (!BRIDGE_SECRET) {
+      console.error(`[Bridge] CRITICAL: BRIDGE_SECRET not configured. Set BRIDGE_SECRET or BRIDGE_DEV_BYPASS=true`);
+      return false;
+    }
+    
+    if (!token) {
+      console.log(`[Bridge] Auth failed: no token provided for ${agentId}`);
+      return false;
+    }
+    
+    const expectedToken = crypto
+      .createHmac('sha256', BRIDGE_SECRET)
+      .update(agentId)
+      .digest('hex')
+      .slice(0, 32);
+    
+    if (token === expectedToken) {
+      return true;
+    }
+    
+    console.log(`[Bridge] Auth failed: invalid token for ${agentId}`);
+    return false;
+  }
+
+  static generateToken(agentId: string, secret: string): string {
+    return crypto
+      .createHmac('sha256', secret)
+      .update(agentId)
+      .digest('hex')
+      .slice(0, 32);
   }
 
   private handlePing(ws: ExtendedWebSocket, message: BridgeMessage): void {
@@ -335,17 +384,56 @@ export class QuackBridge {
     }
   }
 
-  private queueToInbox(message: any): void {
+  private async queueToInbox(message: any): Promise<void> {
     console.log(`[Bridge] Queuing to inbox: ${message.to}`);
     
     try {
-      sendMessage({
-        to: message.to,
-        from: message.from,
-        task: typeof message.content === 'string' ? message.content : JSON.stringify(message.content),
-        context: message.metadata,
-        tags: ['bridge', 'websocket']
-      }, message.from);
+      const to = message.to?.replace(/^\/+/, '') || '';
+      const from = message.from || 'bridge/unknown';
+      const task = typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
+      
+      const pathValidation = validateInboxPath(to, true);
+      if (!pathValidation.valid) {
+        console.error(`[Bridge] Invalid inbox path: ${to} - ${pathValidation.error}`);
+        return;
+      }
+      
+      const CONVERSATIONAL_AGENTS = ['claude', 'gpt', 'gemini', 'grok', 'copilot'];
+      let targetInbox = to;
+      const rootAgent = to.split('/')[0].toLowerCase();
+      
+      if (CONVERSATIONAL_AGENTS.includes(rootAgent) && to.includes('/')) {
+        targetInbox = rootAgent;
+      }
+      
+      const sentMessage = sendMessage({
+        to: targetInbox,
+        from: from,
+        task: task,
+        context: message.metadata || {},
+        tags: ['bridge', 'websocket', 'auto-approved'],
+        project: message.metadata?.project || 'bridge'
+      }, from);
+      
+      approveMessage(sentMessage.id);
+      
+      try {
+        await logAudit(
+          'message.approve',
+          from,
+          'message',
+          sentMessage.id,
+          {
+            reason: 'Auto-approved: authenticated bridge agent',
+            source: 'quack-bridge',
+            targetInbox
+          }
+        );
+      } catch (auditErr) {
+        console.error('[Bridge] Audit log failed:', auditErr);
+      }
+      
+      console.log(`[Bridge] Message queued and auto-approved: ${sentMessage.id} -> ${targetInbox}`);
     } catch (err) {
       console.error('[Bridge] Failed to queue message to inbox:', err);
     }

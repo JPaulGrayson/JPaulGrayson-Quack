@@ -8,6 +8,7 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { createServer } from 'http';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { 
   initStore, 
@@ -72,6 +73,7 @@ import {
   contextPool,
   AuditLogCreate
 } from './context-recovery.js';
+import { QuackBridge } from './quack-bridge.js';
 
 // ElevenLabs client for generating duck sounds
 const elevenlabs = process.env.ELEVENLABS_API_KEY 
@@ -1628,7 +1630,19 @@ app.get('/setup', (req, res) => {
 
 // ============== Start Server ==============
 
-app.listen(PORT, () => {
+// Create HTTP server for WebSocket support
+const server = createServer(app);
+
+// Initialize Quack Bridge WebSocket server
+const bridge = new QuackBridge(server);
+
+// Add Bridge REST routes
+app.use('/bridge', bridge.getRestRoutes());
+
+// Export bridge for use in other modules
+export { bridge };
+
+server.listen(PORT, () => {
   console.log(`
 🦆 Quack Server running on port ${PORT}
    
@@ -1657,6 +1671,12 @@ app.listen(PORT, () => {
    - POST /api/task         - Receive dispatched task
    - GET  /api/dispatcher/status  - Check dispatcher status
    - POST /api/dispatcher/webhook - Register dispatcher webhook
+   
+   Bridge (Real-time WebSocket):
+   - WSS  /bridge/connect   - WebSocket endpoint
+   - GET  /bridge/agents    - List connected agents
+   - GET  /bridge/status    - Bridge status
+   - POST /bridge/send      - Send via WebSocket or inbox
    
    Dashboard:
    - http://localhost:${PORT}

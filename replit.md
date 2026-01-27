@@ -26,6 +26,14 @@ The system uses **Express.js** with TypeScript (Node.js) and `tsx` for execution
 -   **Message Workflow**: Strict status transitions: `pending → approved → in_progress → completed/failed`.
 -   **Hierarchical Inboxes**: Enforces `platform/application` format (e.g., `/claude/project-alpha`) for inbox organization.
 -   **Message Threading**: Supports `threadId` and `replyTo` for conversational flows, with `GET /api/threads` and `GET /api/thread/:threadId` endpoints.
+-   **Quack Bridge (WebSocket)**: `quack-bridge.ts` provides real-time WebSocket communication for agent-to-agent messaging. Features include:
+    - Authentication with `agent_id` (format: `platform/name`)
+    - Direct messaging between online agents
+    - Command/response patterns for synchronous interactions
+    - Broadcast channels for pub/sub messaging
+    - Presence notifications (online/offline)
+    - Automatic fallback to inbox for offline agents
+    - REST endpoints: `GET /bridge/status`, `GET /bridge/agents`, `POST /bridge/send`
 
 ### Frontend
 A static HTML/CSS/JS dashboard in `public/` provides a real-time inbox monitoring interface. Features include:
@@ -59,12 +67,14 @@ A reusable npm package extracted from the core system (`@quack/core`) provides:
 -   `uuid`: For message ID generation.
 -   `cors`: For handling cross-origin requests.
 -   `tsx`: For TypeScript execution.
+-   `ws`: WebSocket library for real-time Quack Bridge communication.
 
 ### Client Integration
 -   **Claude Desktop**: Connects via `mcp-remote` to Quack's SSE endpoint.
 -   **Generic HTTP Clients**: Can interact with the REST API.
 -   **OpenAPI Specification**: Available at `public/openapi.json` for integration with other AI agents (e.g., GPT).
 -   **ElevenLabs**: Used for generating sound notifications.
+-   **Quack Bridge Client**: JavaScript library (`public/quack-bridge-client.js`) for WebSocket connections from browsers or Node.js agents.
 
 ### Database
 -   **PostgreSQL**: Used for the Context Recovery (Flight Recorder) and Archive & Audit systems, specifically for `context_sessions`, `context_audit_logs`, `archived_threads`, and `audit_log` tables.

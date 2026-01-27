@@ -8,8 +8,8 @@
       "notifyVia": "polling",
       "platformUrl": "https://claude.ai",
       "notifyPrompt": "Check your Quack inbox at /claude",
-      "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-27T18:59:58.010Z"
+      "registeredAt": "2026-01-27T19:17:34.667Z",
+      "lastActivity": "2026-01-27T19:18:36.041Z"
     },
     "gpt": {
       "name": "gpt",
@@ -19,8 +19,8 @@
       "notifyVia": "polling",
       "platformUrl": "https://chat.openai.com",
       "notifyPrompt": "Check your Quack inbox at /gpt",
-      "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-26T12:07:59.924Z"
+      "registeredAt": "2026-01-27T19:17:34.667Z",
+      "lastActivity": "2026-01-27T19:18:36.044Z"
     },
     "gemini": {
       "name": "gemini",
@@ -30,8 +30,8 @@
       "notifyVia": "polling",
       "platformUrl": "https://gemini.google.com",
       "notifyPrompt": "Check your Quack inbox at /gemini",
-      "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-26T12:07:59.864Z"
+      "registeredAt": "2026-01-27T19:17:34.667Z",
+      "lastActivity": "2026-01-27T19:18:36.035Z"
     },
     "grok": {
       "name": "grok",
@@ -41,8 +41,8 @@
       "notifyVia": "polling",
       "platformUrl": "https://grok.x.ai",
       "notifyPrompt": "Check your Quack inbox at /grok",
-      "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-26T12:08:00.002Z"
+      "registeredAt": "2026-01-27T19:17:34.667Z",
+      "lastActivity": "2026-01-27T19:18:36.116Z"
     },
     "copilot": {
       "name": "copilot",
@@ -52,8 +52,8 @@
       "notifyVia": "polling",
       "platformUrl": "https://copilot.microsoft.com",
       "notifyPrompt": "Check your Quack inbox at /copilot",
-      "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-26T12:07:59.925Z"
+      "registeredAt": "2026-01-27T19:17:34.667Z",
+      "lastActivity": "2026-01-27T19:18:36.114Z"
     },
     "replit": {
       "name": "replit",
@@ -61,10 +61,10 @@
       "requiresApproval": false,
       "autoApproveOnCheck": true,
       "notifyVia": "polling",
-      "platformUrl": "https://replit.com/@jpaulgrayson/Quack",
-      "notifyPrompt": "quack",
-      "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-27T18:58:56.525Z"
+      "platformUrl": "https://replit.com",
+      "notifyPrompt": "Check your Quack inbox",
+      "registeredAt": "2026-01-27T19:17:34.667Z",
+      "lastActivity": "2026-01-27T19:18:36.116Z"
     },
     "cursor": {
       "name": "cursor",
@@ -73,8 +73,8 @@
       "autoApproveOnCheck": true,
       "notifyVia": "polling",
       "notifyPrompt": "Check your Quack inbox at /cursor",
-      "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-26T12:07:59.822Z"
+      "registeredAt": "2026-01-27T19:17:34.667Z",
+      "lastActivity": "2026-01-27T19:18:36.040Z"
     },
     "antigravity": {
       "name": "antigravity",
@@ -82,8 +82,8 @@
       "requiresApproval": false,
       "autoApproveOnCheck": true,
       "notifyVia": "polling",
-      "registeredAt": "2026-01-21T16:24:57.197Z",
-      "lastActivity": "2026-01-26T12:08:00.000Z"
+      "registeredAt": "2026-01-27T19:17:34.667Z",
+      "lastActivity": "2026-01-27T19:18:36.044Z"
     }
   },
   "routedMessages": {}

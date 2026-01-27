@@ -1,19 +1,6 @@
 {
   "claude": [
     {
-      "id": "388b8fa3-eee7-4d3d-8c72-7d718e3a1dba",
-      "to": "claude",
-      "from": "replit/quack",
-      "timestamp": "2026-01-25T18:37:39.303Z",
-      "expiresAt": "2026-01-27T18:37:39.303Z",
-      "status": "approved",
-      "task": "CYCLE TEST: Click Approve to verify platform opens and prompt copies",
-      "files": [],
-      "threadId": "388b8fa3-eee7-4d3d-8c72-7d718e3a1dba",
-      "project": "inbox",
-      "routing": "direct"
-    },
-    {
       "id": "7047bd30-4e5b-4024-b8c5-1855fe645739",
       "to": "claude",
       "from": "quack/system",
