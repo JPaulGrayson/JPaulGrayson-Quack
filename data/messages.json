@@ -336,21 +336,22 @@
       "threadId": "5c02812a-566a-47df-8d8b-2b84f717badb",
       "project": "inbox",
       "routing": "direct"
+    },
+    {
+      "id": "78b3c202-4cb1-4854-87db-4362062a444d",
+      "to": "claude",
+      "from": "replit/quack-server",
+      "timestamp": "2026-01-27T19:37:52.274Z",
+      "expiresAt": "2026-01-29T19:37:52.274Z",
+      "status": "approved",
+      "task": "Quack Bridge Implementation Complete",
+      "files": [],
+      "threadId": "78b3c202-4cb1-4854-87db-4362062a444d",
+      "project": "inbox",
+      "routing": "direct"
     }
   ],
   "replit/quack": [
-    {
-      "id": "54eccc3f-4529-41ab-8424-b0313550c8fa",
-      "to": "replit/quack",
-      "from": "claude/test",
-      "timestamp": "2026-01-25T19:22:28.316Z",
-      "expiresAt": "2026-01-27T19:22:28.316Z",
-      "status": "in_progress",
-      "task": "DEV TEST: Click Approve to see platform open + prompt copy",
-      "files": [],
-      "threadId": "54eccc3f-4529-41ab-8424-b0313550c8fa",
-      "routing": "direct"
-    },
     {
       "id": "e2f99d06-3ef6-4461-b892-66f4e5123600",
       "to": "replit/quack",
