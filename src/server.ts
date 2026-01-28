@@ -56,7 +56,18 @@ import {
   archiveThread,
   getAuditLogs,
   getAuditStats,
-  logAudit
+  logAudit,
+  createAgent as createAgentDb,
+  getAgent as getAgentDb,
+  listAgents,
+  updateAgent,
+  deleteAgent as deleteAgentDb,
+  pingAgent,
+  createApiKey,
+  validateApiKey,
+  listApiKeys,
+  revokeApiKey,
+  signWebhookPayload
 } from './db.js';
 import startQuackRouter from './startQuack.js';
 import { startGptProxy, stopGptProxy, getGptProxyStatus, processGptInbox } from './gpt-proxy.js';
@@ -130,6 +141,53 @@ dispatcher.start();
 
 // StartQuack monitoring router
 app.use('/api/monitor', startQuackRouter);
+
+// Auto-Wake webhook helper - notifies registered agents when they receive messages
+async function triggerAutoWakeWebhook(inbox: string, message: { id: string; from: string; task: string; timestamp: string }): Promise<void> {
+  try {
+    // Normalize inbox path: remove leading slashes to match agent ID format (platform/name)
+    const normalizedInbox = inbox.replace(/^\/+/, '');
+    const agent = await getAgentDb(normalizedInbox);
+    if (!agent?.webhook) return;
+    
+    const payload = JSON.stringify({
+      event: 'new_message',
+      inbox,
+      from: message.from,
+      messageId: message.id,
+      task: message.task.substring(0, 200),
+      timestamp: message.timestamp
+    });
+    
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (agent.webhookSecret) {
+      headers['X-Quack-Signature'] = signWebhookPayload(payload, agent.webhookSecret);
+    }
+    
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    
+    const response = await fetch(agent.webhook, {
+      method: 'POST',
+      headers,
+      body: payload,
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeout);
+    
+    console.log(`[AutoWake] Notified ${normalizedInbox} via ${agent.webhook} (status: ${response.status})`);
+    
+    await logAudit('message.send', 'system', 'webhook', normalizedInbox, {
+      event: 'auto_wake_notification',
+      webhookUrl: agent.webhook,
+      status: response.status,
+      messageId: message.id
+    });
+  } catch (err) {
+    console.error(`[AutoWake] Failed to notify ${inbox}:`, err);
+  }
+}
 
 // ============== REST API ==============
 
@@ -265,6 +323,16 @@ app.post('/api/send', (req, res) => {
     // Trigger webhooks for this inbox (fire-and-forget with error handling)
     triggerWebhooks(req.body.to, message).catch(err => {
       console.error('Webhook trigger error:', err);
+    });
+    
+    // Trigger Auto-Wake webhook if recipient agent has one registered
+    triggerAutoWakeWebhook(request.to, {
+      id: message.id,
+      from: message.from,
+      task: message.task,
+      timestamp: message.timestamp
+    }).catch(err => {
+      console.error('AutoWake trigger error:', err);
     });
     
     res.json({
@@ -654,6 +722,269 @@ app.post('/api/dispatcher/webhook', (req, res) => {
   
   dispatcher.registerWebhook(agent, baseUrl);
   res.json({ success: true, agent, baseUrl });
+});
+
+// ============== AGENT REGISTRY API ==============
+
+// Authentication middleware
+const devBypass = process.env.BRIDGE_DEV_BYPASS === 'true';
+
+async function extractAuth(req: express.Request): Promise<{ authenticated: boolean; owner?: string; permissions?: string[] }> {
+  const authHeader = req.headers.authorization;
+  const tokenParam = req.query.token as string;
+  
+  const key = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : tokenParam;
+  
+  if (!key) {
+    return { authenticated: false };
+  }
+  
+  const result = await validateApiKey(key);
+  return { authenticated: result.valid, owner: result.owner, permissions: result.permissions };
+}
+
+function requireAuth(level: 'registered' | 'owner' | 'admin' = 'registered') {
+  return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (devBypass) {
+      (req as any).auth = { authenticated: true, owner: 'dev', permissions: ['admin'] };
+      return next();
+    }
+    
+    const auth = await extractAuth(req);
+    
+    if (!auth.authenticated) {
+      return res.status(401).json({ error: 'Authentication required', hint: 'Use Authorization: Bearer quack_xxx header or ?token=quack_xxx query param' });
+    }
+    
+    if (level === 'admin' && !auth.permissions?.includes('admin')) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    (req as any).auth = auth;
+    next();
+  };
+}
+
+// List all public agents (no auth required)
+app.get('/api/agents', async (req, res) => {
+  try {
+    const agents = await listAgents({ publicOnly: true });
+    res.json({ agents, count: agents.length });
+  } catch (err) {
+    console.error('[Agents] List error:', err);
+    res.status(500).json({ error: 'Failed to list agents' });
+  }
+});
+
+// Get single agent (no auth required for public agents)
+app.get('/api/agents/:platform/:name', async (req, res) => {
+  try {
+    const id = `${req.params.platform}/${req.params.name}`;
+    const agent = await getAgentDb(id);
+    
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+    
+    if (!agent.public) {
+      const auth = await extractAuth(req);
+      if (!auth.authenticated || (auth.owner !== agent.owner && !auth.permissions?.includes('admin'))) {
+        return res.status(404).json({ error: 'Agent not found' });
+      }
+    }
+    
+    const sanitized = { ...agent };
+    delete (sanitized as any).webhookSecret;
+    res.json(sanitized);
+  } catch (err) {
+    console.error('[Agents] Get error:', err);
+    res.status(500).json({ error: 'Failed to get agent' });
+  }
+});
+
+// Register new agent (requires auth)
+app.post('/api/agents', requireAuth('registered'), async (req, res) => {
+  try {
+    const auth = (req as any).auth;
+    const { id, name, platform, capabilities, public: isPublic, webhook, webhookSecret, metadata } = req.body;
+    
+    if (!id || !name || !platform) {
+      return res.status(400).json({ error: 'Missing required fields: id, name, platform' });
+    }
+    
+    const existing = await getAgentDb(id);
+    if (existing) {
+      return res.status(409).json({ error: 'Agent with this ID already exists' });
+    }
+    
+    const agent = await createAgentDb({
+      id,
+      name,
+      platform,
+      capabilities: capabilities || [],
+      status: 'unknown',
+      public: isPublic !== false,
+      owner: auth.owner,
+      webhook,
+      webhookSecret,
+      metadata
+    });
+    
+    await logAudit('agent.register', auth.owner, 'agent', id, { name, platform });
+    
+    const sanitized = { ...agent };
+    delete (sanitized as any).webhookSecret;
+    res.status(201).json(sanitized);
+  } catch (err) {
+    console.error('[Agents] Create error:', err);
+    res.status(500).json({ error: 'Failed to create agent' });
+  }
+});
+
+// Update agent (owner only)
+app.put('/api/agents/:platform/:name', requireAuth('registered'), async (req, res) => {
+  try {
+    const auth = (req as any).auth;
+    const id = `${req.params.platform}/${req.params.name}`;
+    
+    const existing = await getAgentDb(id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+    
+    if (existing.owner !== auth.owner && !auth.permissions?.includes('admin')) {
+      return res.status(403).json({ error: 'Only the owner can update this agent' });
+    }
+    
+    const { name, platform, capabilities, status, public: isPublic, webhook, webhookSecret, metadata } = req.body;
+    
+    const agent = await updateAgent(id, {
+      name,
+      platform,
+      capabilities,
+      status,
+      public: isPublic,
+      webhook,
+      webhookSecret,
+      metadata
+    });
+    
+    await logAudit('agent.update', auth.owner, 'agent', id, req.body);
+    
+    const sanitized = { ...agent };
+    delete (sanitized as any).webhookSecret;
+    res.json(sanitized);
+  } catch (err) {
+    console.error('[Agents] Update error:', err);
+    res.status(500).json({ error: 'Failed to update agent' });
+  }
+});
+
+// Delete agent (owner only)
+app.delete('/api/agents/:platform/:name', requireAuth('registered'), async (req, res) => {
+  try {
+    const auth = (req as any).auth;
+    const id = `${req.params.platform}/${req.params.name}`;
+    
+    const existing = await getAgentDb(id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+    
+    if (existing.owner !== auth.owner && !auth.permissions?.includes('admin')) {
+      return res.status(403).json({ error: 'Only the owner can delete this agent' });
+    }
+    
+    await deleteAgentDb(id);
+    await logAudit('agent.delete', auth.owner, 'agent', id, {});
+    
+    res.json({ success: true, message: 'Agent deleted' });
+  } catch (err) {
+    console.error('[Agents] Delete error:', err);
+    res.status(500).json({ error: 'Failed to delete agent' });
+  }
+});
+
+// Ping agent (update lastSeen)
+app.post('/api/agents/:platform/:name/ping', requireAuth('registered'), async (req, res) => {
+  try {
+    const auth = (req as any).auth;
+    const id = `${req.params.platform}/${req.params.name}`;
+    
+    const existing = await getAgentDb(id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+    
+    if (existing.owner !== auth.owner && !auth.permissions?.includes('admin')) {
+      return res.status(403).json({ error: 'Only the owner can ping this agent' });
+    }
+    
+    const agent = await pingAgent(id);
+    
+    const sanitized = { ...agent };
+    delete (sanitized as any).webhookSecret;
+    res.json(sanitized);
+  } catch (err) {
+    console.error('[Agents] Ping error:', err);
+    res.status(500).json({ error: 'Failed to ping agent' });
+  }
+});
+
+// ============== API KEY MANAGEMENT ==============
+
+// Generate new API key (admin only for now)
+app.post('/api/keys', requireAuth('admin'), async (req, res) => {
+  try {
+    const auth = (req as any).auth;
+    const { owner, name, permissions } = req.body;
+    
+    if (!owner) {
+      return res.status(400).json({ error: 'Missing required field: owner' });
+    }
+    
+    const result = await createApiKey(owner, name, permissions);
+    
+    res.status(201).json({
+      success: true,
+      key: result.key,
+      record: result.record,
+      warning: 'Store this key securely - it will not be shown again'
+    });
+  } catch (err) {
+    console.error('[Keys] Create error:', err);
+    res.status(500).json({ error: 'Failed to create API key' });
+  }
+});
+
+// List your API keys
+app.get('/api/keys', requireAuth('registered'), async (req, res) => {
+  try {
+    const auth = (req as any).auth;
+    const keys = await listApiKeys(auth.owner);
+    res.json({ keys, count: keys.length });
+  } catch (err) {
+    console.error('[Keys] List error:', err);
+    res.status(500).json({ error: 'Failed to list keys' });
+  }
+});
+
+// Revoke an API key
+app.delete('/api/keys/:id', requireAuth('registered'), async (req, res) => {
+  try {
+    const auth = (req as any).auth;
+    const keyId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const revoked = await revokeApiKey(keyId, auth.owner || '');
+    
+    if (!revoked) {
+      return res.status(404).json({ error: 'Key not found or already revoked' });
+    }
+    
+    res.json({ success: true, message: 'API key revoked' });
+  } catch (err) {
+    console.error('[Keys] Revoke error:', err);
+    res.status(500).json({ error: 'Failed to revoke key' });
+  }
 });
 
 // ============== COWORK API ==============
