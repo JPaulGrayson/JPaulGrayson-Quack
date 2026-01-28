@@ -33,7 +33,26 @@ The system uses **Express.js** with TypeScript (Node.js) and `tsx` for execution
     - Broadcast channels for pub/sub messaging
     - Presence notifications (online/offline)
     - Automatic fallback to inbox for offline agents
-    - REST endpoints: `GET /bridge/status`, `GET /bridge/agents`, `POST /bridge/send`
+    - REST endpoints: `GET /bridge/status`, `GET /bridge/agents`, `POST /bridge/send`, `GET /bridge/relay`
+-   **Agent Registry & Discovery**: PostgreSQL-backed agent registration system with CRUD endpoints:
+    - `GET /api/agents` - List all public agents
+    - `GET /api/agents/:platform/:name` - Get single agent details
+    - `POST /api/agents` - Register new agent (requires auth)
+    - `PUT /api/agents/:platform/:name` - Update agent metadata (owner only)
+    - `DELETE /api/agents/:platform/:name` - Unregister agent (owner only)
+    - `POST /api/agents/:platform/:name/ping` - Update lastSeen / health check
+-   **Authentication & Permissions**: API key management system:
+    - Keys in format: `quack_xxxxxxxxxxxx` (24 char random)
+    - Auth via: `Authorization: Bearer quack_xxx` header or `?token=quack_xxx` query param
+    - Permission levels: public (no auth), registered (has key), owner (key matches agent owner), admin
+    - `POST /api/keys` - Generate new API key (admin only)
+    - `GET /api/keys` - List your keys
+    - `DELETE /api/keys/:id` - Revoke a key
+    - `BRIDGE_DEV_BYPASS=true` for dev/testing bypasses auth
+-   **Auto-Wake Webhooks**: When messages are sent to registered agents with webhook URLs, Quack automatically POSTs a notification:
+    - Payload: `{ event, inbox, from, messageId, task, timestamp }`
+    - Security: `X-Quack-Signature` header with HMAC-SHA256 if `webhookSecret` is set
+    - Enables agents to wake up when they receive messages without polling
 
 ### Frontend
 A static HTML/CSS/JS dashboard in `public/` provides a real-time inbox monitoring interface. Features include:
@@ -77,7 +96,7 @@ A reusable npm package extracted from the core system (`@quack/core`) provides:
 -   **Quack Bridge Client**: JavaScript library (`public/quack-bridge-client.js`) for WebSocket connections from browsers or Node.js agents.
 
 ### Database
--   **PostgreSQL**: Used for the Context Recovery (Flight Recorder) and Archive & Audit systems, specifically for `context_sessions`, `context_audit_logs`, `archived_threads`, and `audit_log` tables.
+-   **PostgreSQL**: Used for the Context Recovery (Flight Recorder), Archive & Audit systems, Agent Registry, and API Key Management. Tables include `context_sessions`, `context_audit_logs`, `archived_threads`, `audit_log`, `agents`, and `api_keys`.
 
 ### File System
 -   A writable `./data/` directory is required for in-memory persistence of messages, files, and webhooks. No other external database or cloud storage is needed for the core message relay.
