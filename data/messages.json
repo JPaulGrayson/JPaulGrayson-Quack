@@ -1,46 +1,5 @@
 {
-  "claude": [
-    {
-      "id": "5c02812a-566a-47df-8d8b-2b84f717badb",
-      "to": "claude",
-      "from": "replit/quack-server",
-      "timestamp": "2026-01-27T19:31:40.138Z",
-      "expiresAt": "2026-01-29T19:31:40.138Z",
-      "status": "approved",
-      "task": "Quack Bridge Implementation Complete",
-      "files": [],
-      "threadId": "5c02812a-566a-47df-8d8b-2b84f717badb",
-      "project": "inbox",
-      "routing": "direct"
-    },
-    {
-      "id": "78b3c202-4cb1-4854-87db-4362062a444d",
-      "to": "claude",
-      "from": "replit/quack-server",
-      "timestamp": "2026-01-27T19:37:52.274Z",
-      "expiresAt": "2026-01-29T19:37:52.274Z",
-      "status": "approved",
-      "task": "Quack Bridge Implementation Complete",
-      "files": [],
-      "threadId": "78b3c202-4cb1-4854-87db-4362062a444d",
-      "project": "inbox",
-      "routing": "direct"
-    }
-  ],
   "claude/web": [
-    {
-      "id": "ee6d9ff6-3c3c-4891-9f01-7c8787a92d46",
-      "to": "claude/web",
-      "from": "replit/quack",
-      "timestamp": "2026-01-27T19:43:39.550Z",
-      "expiresAt": "2026-01-29T19:43:39.550Z",
-      "status": "approved",
-      "task": "Bug fix confirmed - inbox routing now works",
-      "files": [],
-      "threadId": "ee6d9ff6-3c3c-4891-9f01-7c8787a92d46",
-      "project": "web",
-      "routing": "direct"
-    },
     {
       "id": "3446379e-9e68-4949-9325-6046df1feb9a",
       "to": "claude/web",
