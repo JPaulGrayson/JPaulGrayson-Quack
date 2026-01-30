@@ -1193,8 +1193,115 @@
         </div>
       </div>
 
-      <h3 style="color: #9c27b0; margin-bottom: 1rem;">🎛️ Agent Control Room</h3>
-      <p style="color: #888; margin-bottom: 1.5rem; text-align: center;">Manage and launch multiple Replit agent windows in tiled layouts for efficient workflow management.</p>
+      <!-- Header with Settings -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+          <h3 style="color: #9c27b0; margin: 0;">🎛️ Agent Control Room</h3>
+          <p style="color: #888; margin: 0.5rem 0 0 0;">Manage and launch multiple Replit agent windows in tiled layouts for efficient workflow management.</p>
+        </div>
+        <button class="btn btn-secondary" id="cr-settings-btn" style="padding: 0.5rem 1rem;">⚙️ Settings</button>
+      </div>
+
+      <!-- Action Buttons (2 rows of 3) -->
+      <div class="cr-action-buttons" id="cr-action-buttons" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+        <button class="cr-action-btn" data-cr-action="send-quack" style="background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.3); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s;">
+          <span style="font-size: 1.5rem;">🦆</span>
+          <span style="color: #ffc107; font-weight: 500;">Send Quack</span>
+        </button>
+        <button class="cr-action-btn" data-cr-action="new-workflow" style="background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.3); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s;">
+          <span style="font-size: 1.5rem;">➕</span>
+          <span style="color: #4caf50; font-weight: 500;">New Workflow</span>
+        </button>
+        <button class="cr-action-btn" data-cr-action="analyze-code" style="background: rgba(33,150,243,0.1); border: 1px solid rgba(33,150,243,0.3); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s;">
+          <span style="font-size: 1.5rem;">📊</span>
+          <span style="color: #2196f3; font-weight: 500;">Analyze Code</span>
+        </button>
+        <button class="cr-action-btn" data-cr-action="run-template" style="background: rgba(156,39,176,0.1); border: 1px solid rgba(156,39,176,0.3); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s;">
+          <span style="font-size: 1.5rem;">📋</span>
+          <span style="color: #9c27b0; font-weight: 500;">Run Template</span>
+        </button>
+        <button class="cr-action-btn" data-cr-action="refresh-all" style="background: rgba(0,217,255,0.1); border: 1px solid rgba(0,217,255,0.3); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s;">
+          <span style="font-size: 1.5rem;">🔄</span>
+          <span style="color: #00d9ff; font-weight: 500;">Refresh All</span>
+        </button>
+        <button class="cr-action-btn" data-cr-action="test-agent" style="background: rgba(255,152,0,0.1); border: 1px solid rgba(255,152,0,0.3); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s;">
+          <span style="font-size: 1.5rem;">🤖</span>
+          <span style="color: #ff9800; font-weight: 500;">Test Agent</span>
+        </button>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="cr-stats-bar" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="stat" style="background: rgba(156,39,176,0.1); border-color: rgba(156,39,176,0.3);">
+          <div class="stat-value" id="cr-stat-inboxes">0</div>
+          <div class="stat-label">Inboxes</div>
+        </div>
+        <div class="stat" style="background: rgba(33,150,243,0.1); border-color: rgba(33,150,243,0.3);">
+          <div class="stat-value" id="cr-stat-messages">0</div>
+          <div class="stat-label">Messages</div>
+        </div>
+        <div class="stat" style="background: rgba(255,193,7,0.1); border-color: rgba(255,193,7,0.3);">
+          <div class="stat-value" id="cr-stat-pending">0</div>
+          <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat" style="background: rgba(76,175,80,0.1); border-color: rgba(76,175,80,0.3);">
+          <div class="stat-value" id="cr-stat-active">0</div>
+          <div class="stat-label">In Progress</div>
+        </div>
+      </div>
+
+      <!-- Sub-Tabs -->
+      <div class="cr-subtabs" id="cr-subtabs" style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+        <button class="tab-btn active" id="cr-tab-inboxes" data-cr-tab="inboxes">📥 Inboxes</button>
+        <button class="tab-btn" id="cr-tab-widget" data-cr-tab="widget">🦆 Quack Widget</button>
+        <button class="tab-btn" id="cr-tab-audit" data-cr-tab="audit">📜 Audit Trail</button>
+        <button class="tab-btn" id="cr-tab-agents" data-cr-tab="agents">🤖 Agents</button>
+        <button class="tab-btn" id="cr-tab-threads" data-cr-tab="threads">💬 Threads</button>
+      </div>
+
+      <!-- Sub-Tab Content Areas -->
+      <div id="cr-subtab-content" style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.1); min-height: 200px;">
+        <div id="cr-content-inboxes">
+          <h4 style="color: #9c27b0; margin-bottom: 1rem;">📥 Agent Inboxes</h4>
+          <div id="cr-inboxes-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <p style="color: #888;">Loading inboxes...</p>
+          </div>
+        </div>
+        <div id="cr-content-widget" style="display: none;">
+          <h4 style="color: #ffc107; margin-bottom: 1rem;">🦆 Quack Widget</h4>
+          <p style="color: #888; margin-bottom: 1rem;">Embed the Quack widget in your projects:</p>
+          <pre style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; color: #e0e0e0;">&lt;div id="quack-widget"&gt;&lt;/div&gt;
+&lt;script src="https://quack.us.com/quack-widget.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  QuackWidget.init({
+    container: '#quack-widget',
+    inbox: 'your/inbox',
+    pollInterval: 5000,
+    theme: 'dark'
+  });
+&lt;/script&gt;</pre>
+        </div>
+        <div id="cr-content-audit" style="display: none;">
+          <h4 style="color: #00d9ff; margin-bottom: 1rem;">📜 Recent Activity</h4>
+          <div id="cr-audit-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <p style="color: #888;">Loading audit trail...</p>
+          </div>
+        </div>
+        <div id="cr-content-agents" style="display: none;">
+          <h4 style="color: #4caf50; margin-bottom: 1rem;">🤖 Registered Agents</h4>
+          <div id="cr-agents-api-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <p style="color: #888;">Loading agents...</p>
+          </div>
+        </div>
+        <div id="cr-content-threads" style="display: none;">
+          <h4 style="color: #ff9800; margin-bottom: 1rem;">💬 Message Threads</h4>
+          <div id="cr-threads-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <p style="color: #888;">Loading threads...</p>
+          </div>
+        </div>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 2rem 0;">
 
       <!-- Add Agent Form -->
       <div class="cr-add-agent" style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.1);">
@@ -1300,8 +1407,113 @@
     </div>
   </div>
 
+  <!-- Send Quack Modal -->
+  <div class="modal-overlay" id="send-quack-modal">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2 class="modal-title">🦆 Send Quack Message</h2>
+        <button class="modal-close" data-modal-close="send-quack-modal">×</button>
+      </div>
+      <div style="padding: 1.5rem;">
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; color: #ccc; font-size: 0.85rem; margin-bottom: 0.25rem;">From (your inbox)</label>
+          <input type="text" id="sq-from" placeholder="e.g., replit/orchestrate" style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #e0e0e0;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; color: #ccc; font-size: 0.85rem; margin-bottom: 0.25rem;">To (recipient inbox)</label>
+          <input type="text" id="sq-to" placeholder="e.g., claude/project" style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #e0e0e0;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; color: #ccc; font-size: 0.85rem; margin-bottom: 0.25rem;">Task / Message</label>
+          <textarea id="sq-task" rows="4" placeholder="Enter your message or task..." style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #e0e0e0; resize: vertical;"></textarea>
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; color: #ccc; font-size: 0.85rem; margin-bottom: 0.25rem;">Context (optional)</label>
+          <textarea id="sq-context" rows="2" placeholder="Additional context..." style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #e0e0e0; resize: vertical;"></textarea>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; color: #ccc; cursor: pointer;">
+            <input type="checkbox" id="sq-require-approval" checked>
+            <span>Require Approval</span>
+          </label>
+          <select id="sq-priority" style="padding: 0.5rem; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #e0e0e0;">
+            <option value="normal">Normal Priority</option>
+            <option value="high">High Priority</option>
+            <option value="low">Low Priority</option>
+          </select>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+          <button class="btn btn-secondary" data-modal-close="send-quack-modal">Cancel</button>
+          <button class="btn btn-primary" id="sq-send-btn" style="background: linear-gradient(135deg, #ffc107, #ff9800);">🦆 Send Quack</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test Agent Modal -->
+  <div class="modal-overlay" id="test-agent-modal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 class="modal-title">🤖 Test Agent</h2>
+        <button class="modal-close" data-modal-close="test-agent-modal">×</button>
+      </div>
+      <div style="padding: 1.5rem;">
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; color: #ccc; font-size: 0.85rem; margin-bottom: 0.25rem;">Agent Inbox ID</label>
+          <input type="text" id="ta-inbox" placeholder="e.g., claude/my-project" style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #e0e0e0;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; color: #ccc; font-size: 0.85rem; margin-bottom: 0.25rem;">Test Message</label>
+          <input type="text" id="ta-message" value="ping" style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #e0e0e0;">
+        </div>
+        <div id="ta-result" style="display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+          <button class="btn btn-secondary" data-modal-close="test-agent-modal">Cancel</button>
+          <button class="btn btn-primary" id="ta-send-btn" style="background: linear-gradient(135deg, #ff9800, #ff5722);">🔔 Send Ping</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Control Room Settings Modal -->
+  <div class="modal-overlay" id="cr-settings-modal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 class="modal-title">⚙️ Control Room Settings</h2>
+        <button class="modal-close" data-modal-close="cr-settings-modal">×</button>
+      </div>
+      <div style="padding: 1.5rem;">
+        <div style="margin-bottom: 1.5rem;">
+          <h4 style="color: #ffc107; margin-bottom: 0.75rem;">Auto-Refresh</h4>
+          <label style="display: flex; align-items: center; gap: 0.5rem; color: #ccc; cursor: pointer;">
+            <input type="checkbox" id="cr-auto-refresh">
+            <span>Auto-refresh stats every 30 seconds</span>
+          </label>
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+          <h4 style="color: #00d9ff; margin-bottom: 0.75rem;">Default Layout</h4>
+          <select id="cr-default-layout" style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #e0e0e0;">
+            <option value="1x2">1+1 (2 columns)</option>
+            <option value="1x3">1+2 (3 columns)</option>
+            <option value="2x2">1+3 (2x2 grid)</option>
+            <option value="3x2">1+5 (3x2 grid)</option>
+          </select>
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+          <h4 style="color: #4caf50; margin-bottom: 0.75rem;">Data Management</h4>
+          <button class="btn btn-secondary" id="cr-export-btn" style="margin-right: 0.5rem;">📤 Export Agents</button>
+          <button class="btn btn-secondary" id="cr-import-btn">📥 Import Agents</button>
+          <input type="file" id="cr-import-file" accept=".json" style="display: none;">
+        </div>
+        <div>
+          <h4 style="color: #f44336; margin-bottom: 0.75rem;">Danger Zone</h4>
+          <button class="btn btn-danger" id="cr-clear-btn">🗑️ Clear All Agents</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Settings Modal -->
-  <div class="modal-overlay" id="settings-modal">
     <div class="modal settings-modal">
       <div class="modal-header">
         <h2 class="modal-title">Settings</h2>
@@ -2136,8 +2348,9 @@
       document.getElementById('audit').style.display = 'none';
       document.getElementById('control-room').style.display = 'block';
       setActiveTab('control-room-view-btn');
+      initControlRoom();
       crLoadAgents();
-      crCheckWakeStatus();
+      crRefreshAll();
     }
 
     function crSaveAgents() {
@@ -2385,6 +2598,453 @@
         }
       });
     }
+
+    // ===== CONTROL ROOM ENHANCED FEATURES =====
+    let crCurrentSubTab = 'inboxes';
+    let crAutoRefreshInterval = null;
+
+    function crOpenSettings() {
+      document.getElementById('cr-settings-modal').classList.add('active');
+      loadCrSettings();
+    }
+
+    function closeCrSettings() {
+      document.getElementById('cr-settings-modal').classList.remove('active');
+    }
+
+    function loadCrSettings() {
+      const settings = JSON.parse(localStorage.getItem('quack-cr-settings') || '{}');
+      document.getElementById('cr-auto-refresh').checked = settings.autoRefresh || false;
+      document.getElementById('cr-default-layout').value = settings.defaultLayout || '1x2';
+    }
+
+    function saveCrSettings() {
+      const settings = {
+        autoRefresh: document.getElementById('cr-auto-refresh').checked,
+        defaultLayout: document.getElementById('cr-default-layout').value
+      };
+      localStorage.setItem('quack-cr-settings', JSON.stringify(settings));
+      
+      // Apply auto-refresh setting
+      if (settings.autoRefresh) {
+        if (!crAutoRefreshInterval) {
+          crAutoRefreshInterval = setInterval(crRefreshAll, 30000);
+        }
+      } else {
+        if (crAutoRefreshInterval) {
+          clearInterval(crAutoRefreshInterval);
+          crAutoRefreshInterval = null;
+        }
+      }
+    }
+
+    function exportCrAgents() {
+      const data = JSON.stringify(crAgents, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'quack-control-room-agents.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importCrAgents(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            crAgents = [...crAgents, ...imported.map(a => ({
+              ...a,
+              id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+            }))];
+            crSaveAgents();
+            crLoadAgents();
+            alert(`Imported ${imported.length} agents`);
+          }
+        } catch (err) {
+          alert('Failed to import agents: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function clearCrAgents() {
+      if (confirm('Are you sure you want to remove all agents from the Control Room?')) {
+        crAgents = [];
+        crSaveAgents();
+        crLoadAgents();
+      }
+    }
+
+    // Action Button Functions
+    function crOpenSendQuack() {
+      document.getElementById('send-quack-modal').classList.add('active');
+    }
+
+    function closeSendQuackModal() {
+      document.getElementById('send-quack-modal').classList.remove('active');
+    }
+
+    async function sendQuackMessage() {
+      const from = document.getElementById('sq-from').value.trim();
+      const to = document.getElementById('sq-to').value.trim();
+      const task = document.getElementById('sq-task').value.trim();
+      const context = document.getElementById('sq-context').value.trim();
+      const requireApproval = document.getElementById('sq-require-approval').checked;
+      const priority = document.getElementById('sq-priority').value;
+
+      if (!from || !to || !task) {
+        alert('Please fill in From, To, and Task fields');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from, to, task, context,
+            requireApproval,
+            priority
+          })
+        });
+        const data = await res.json();
+        if (data.id) {
+          alert('Message sent successfully!');
+          closeSendQuackModal();
+          document.getElementById('sq-from').value = '';
+          document.getElementById('sq-to').value = '';
+          document.getElementById('sq-task').value = '';
+          document.getElementById('sq-context').value = '';
+          crRefreshAll();
+        } else {
+          alert('Failed to send message: ' + (data.error || 'Unknown error'));
+        }
+      } catch (e) {
+        alert('Failed to send message: ' + e.message);
+      }
+    }
+
+    function crNewWorkflow() {
+      alert('Workflow creation coming soon! For now, use the Sessions tab to sign in agents.');
+    }
+
+    function crAnalyzeCode() {
+      window.open('https://logicart.ai', '_blank');
+    }
+
+    function crRunTemplate() {
+      alert('Template runner coming soon! This will allow you to run predefined agent workflows.');
+    }
+
+    async function crRefreshAll() {
+      await Promise.all([
+        crCheckWakeStatus(),
+        crLoadStats(),
+        crLoadSubTabContent(crCurrentSubTab)
+      ]);
+    }
+
+    function crTestAgent() {
+      document.getElementById('test-agent-modal').classList.add('active');
+    }
+
+    function closeTestAgentModal() {
+      document.getElementById('test-agent-modal').classList.remove('active');
+      document.getElementById('ta-result').style.display = 'none';
+    }
+
+    async function runAgentTest() {
+      const inbox = document.getElementById('ta-inbox').value.trim();
+      const message = document.getElementById('ta-message').value.trim();
+      const resultDiv = document.getElementById('ta-result');
+
+      if (!inbox) {
+        alert('Please enter an agent inbox ID');
+        return;
+      }
+
+      resultDiv.style.display = 'block';
+      resultDiv.style.background = 'rgba(33,150,243,0.2)';
+      resultDiv.style.color = '#2196f3';
+      resultDiv.innerHTML = 'Sending ping...';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: 'control-room/test',
+            to: inbox,
+            task: message || 'ping',
+            context: 'Test message from Control Room',
+            requireApproval: false
+          })
+        });
+        const data = await res.json();
+
+        if (data.id) {
+          resultDiv.style.background = 'rgba(76,175,80,0.2)';
+          resultDiv.style.color = '#4caf50';
+          resultDiv.innerHTML = `✓ Ping sent successfully!<br>Message ID: ${data.id}`;
+        } else {
+          resultDiv.style.background = 'rgba(244,67,54,0.2)';
+          resultDiv.style.color = '#f44336';
+          resultDiv.innerHTML = `✗ Failed: ${data.error || 'Unknown error'}`;
+        }
+      } catch (e) {
+        resultDiv.style.background = 'rgba(244,67,54,0.2)';
+        resultDiv.style.color = '#f44336';
+        resultDiv.innerHTML = `✗ Error: ${e.message}`;
+      }
+    }
+
+    // Stats Bar
+    async function crLoadStats() {
+      try {
+        const inboxesRes = await fetch(`${API_BASE}/api/inboxes`);
+        const inboxesData = await inboxesRes.json();
+        
+        let totalMessages = 0;
+        let pendingCount = 0;
+        let activeCount = 0;
+
+        for (const inbox of inboxesData.inboxes || []) {
+          try {
+            const msgRes = await fetch(`${API_BASE}/api/inbox/${inbox}`);
+            const msgData = await msgRes.json();
+            const messages = msgData.messages || [];
+            totalMessages += messages.length;
+            pendingCount += messages.filter(m => m.status === 'pending').length;
+            activeCount += messages.filter(m => m.status === 'in_progress' || m.status === 'approved').length;
+          } catch (e) {}
+        }
+
+        document.getElementById('cr-stat-inboxes').textContent = inboxesData.inboxes?.length || 0;
+        document.getElementById('cr-stat-messages').textContent = totalMessages;
+        document.getElementById('cr-stat-pending').textContent = pendingCount;
+        document.getElementById('cr-stat-active').textContent = activeCount;
+      } catch (e) {
+        console.error('Failed to load CR stats:', e);
+      }
+    }
+
+    // Sub-Tabs
+    function crShowSubTab(tab) {
+      crCurrentSubTab = tab;
+      
+      // Update tab buttons
+      document.querySelectorAll('.cr-subtabs .tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.id === `cr-tab-${tab}`);
+      });
+
+      // Hide all content areas
+      document.getElementById('cr-content-inboxes').style.display = 'none';
+      document.getElementById('cr-content-widget').style.display = 'none';
+      document.getElementById('cr-content-audit').style.display = 'none';
+      document.getElementById('cr-content-agents').style.display = 'none';
+      document.getElementById('cr-content-threads').style.display = 'none';
+
+      // Show selected content
+      document.getElementById(`cr-content-${tab}`).style.display = 'block';
+
+      // Load content
+      crLoadSubTabContent(tab);
+    }
+
+    async function crLoadSubTabContent(tab) {
+      switch(tab) {
+        case 'inboxes':
+          await crLoadInboxesList();
+          break;
+        case 'audit':
+          await crLoadAuditList();
+          break;
+        case 'agents':
+          await crLoadAgentsList();
+          break;
+        case 'threads':
+          await crLoadThreadsList();
+          break;
+      }
+    }
+
+    async function crLoadInboxesList() {
+      const container = document.getElementById('cr-inboxes-list');
+      try {
+        const res = await fetch(`${API_BASE}/api/inboxes`);
+        const data = await res.json();
+        const inboxes = data.inboxes || [];
+
+        if (inboxes.length === 0) {
+          container.innerHTML = '<p style="color: #888;">No inboxes found.</p>';
+          return;
+        }
+
+        let html = '';
+        for (const inbox of inboxes) {
+          const msgRes = await fetch(`${API_BASE}/api/inbox/${inbox}`);
+          const msgData = await msgRes.json();
+          const pending = msgData.messages?.filter(m => m.status === 'pending').length || 0;
+          
+          html += `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+              <span style="color: #e0e0e0;">/${inbox}</span>
+              <span class="${pending > 0 ? 'status-pending' : 'status-approved'}" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">${pending} pending</span>
+            </div>
+          `;
+        }
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = `<p style="color: #f44336;">Error loading inboxes: ${e.message}</p>`;
+      }
+    }
+
+    async function crLoadAuditList() {
+      const container = document.getElementById('cr-audit-list');
+      try {
+        const res = await fetch(`${API_BASE}/api/audit?limit=20`);
+        const data = await res.json();
+        const logs = data.logs || [];
+
+        if (logs.length === 0) {
+          container.innerHTML = '<p style="color: #888;">No audit logs found.</p>';
+          return;
+        }
+
+        container.innerHTML = logs.map(log => `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 6px; font-size: 0.85rem;">
+            <span style="color: ${getAuditColor(log.action)};">${log.action}</span>
+            <span style="color: #888;">${new Date(log.timestamp).toLocaleString()}</span>
+          </div>
+        `).join('');
+      } catch (e) {
+        container.innerHTML = `<p style="color: #f44336;">Error loading audit: ${e.message}</p>`;
+      }
+    }
+
+    async function crLoadAgentsList() {
+      const container = document.getElementById('cr-agents-api-list');
+      try {
+        const res = await fetch(`${API_BASE}/api/agents`);
+        const data = await res.json();
+        const agents = data.agents || [];
+
+        if (agents.length === 0) {
+          container.innerHTML = '<p style="color: #888;">No agents registered in the API.</p>';
+          return;
+        }
+
+        container.innerHTML = agents.map(agent => `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+            <div>
+              <div style="color: #4caf50; font-weight: 500;">${escapeHtml(agent.platform)}/${escapeHtml(agent.name)}</div>
+              ${agent.description ? `<div style="color: #888; font-size: 0.8rem;">${escapeHtml(agent.description)}</div>` : ''}
+            </div>
+            <span style="color: #888; font-size: 0.8rem;">${agent.category || 'unknown'}</span>
+          </div>
+        `).join('');
+      } catch (e) {
+        container.innerHTML = `<p style="color: #f44336;">Error loading agents: ${e.message}</p>`;
+      }
+    }
+
+    async function crLoadThreadsList() {
+      const container = document.getElementById('cr-threads-list');
+      try {
+        const res = await fetch(`${API_BASE}/api/threads?limit=20`);
+        const data = await res.json();
+        const threads = data.threads || [];
+
+        if (threads.length === 0) {
+          container.innerHTML = '<p style="color: #888;">No threads found.</p>';
+          return;
+        }
+
+        container.innerHTML = threads.map(thread => `
+          <div style="padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: #ff9800;">${escapeHtml(thread.threadId?.substr(0, 8) || 'N/A')}...</span>
+              <span style="color: #888; font-size: 0.8rem;">${thread.messageCount || 0} messages</span>
+            </div>
+            ${thread.participants ? `<div style="color: #888; font-size: 0.8rem; margin-top: 0.25rem;">${thread.participants.join(', ')}</div>` : ''}
+          </div>
+        `).join('');
+      } catch (e) {
+        container.innerHTML = `<p style="color: #f44336;">Error loading threads: ${e.message}</p>`;
+      }
+    }
+
+    // Initialize Control Room on load
+    function initControlRoom() {
+      const settings = JSON.parse(localStorage.getItem('quack-cr-settings') || '{}');
+      if (settings.defaultLayout) {
+        crSelectedLayout = settings.defaultLayout;
+        crSelectLayout(settings.defaultLayout);
+      }
+      // Only create interval if autoRefresh is enabled AND no interval exists
+      if (settings.autoRefresh && !crAutoRefreshInterval) {
+        crAutoRefreshInterval = setInterval(crRefreshAll, 30000);
+      }
+    }
+
+    // Event delegation for Control Room action buttons
+    document.getElementById('cr-action-buttons')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-cr-action]');
+      if (!btn) return;
+      
+      const action = btn.dataset.crAction;
+      switch (action) {
+        case 'send-quack': crOpenSendQuack(); break;
+        case 'new-workflow': crNewWorkflow(); break;
+        case 'analyze-code': crAnalyzeCode(); break;
+        case 'run-template': crRunTemplate(); break;
+        case 'refresh-all': crRefreshAll(); break;
+        case 'test-agent': crTestAgent(); break;
+      }
+    });
+
+    // Event delegation for modal close buttons
+    document.addEventListener('click', (e) => {
+      const closeBtn = e.target.closest('[data-modal-close]');
+      if (closeBtn) {
+        const modalId = closeBtn.dataset.modalClose;
+        document.getElementById(modalId)?.classList.remove('active');
+      }
+    });
+
+    // Settings button
+    document.getElementById('cr-settings-btn')?.addEventListener('click', crOpenSettings);
+
+    // Send Quack button
+    document.getElementById('sq-send-btn')?.addEventListener('click', sendQuackMessage);
+
+    // Test Agent button
+    document.getElementById('ta-send-btn')?.addEventListener('click', runAgentTest);
+
+    // Sub-tabs event delegation
+    document.getElementById('cr-subtabs')?.addEventListener('click', (e) => {
+      const tabBtn = e.target.closest('[data-cr-tab]');
+      if (tabBtn) {
+        crShowSubTab(tabBtn.dataset.crTab);
+      }
+    });
+
+    // CR Settings modal inputs
+    document.getElementById('cr-auto-refresh')?.addEventListener('change', saveCrSettings);
+    document.getElementById('cr-default-layout')?.addEventListener('change', saveCrSettings);
+    document.getElementById('cr-export-btn')?.addEventListener('click', exportCrAgents);
+    document.getElementById('cr-import-btn')?.addEventListener('click', () => {
+      document.getElementById('cr-import-file')?.click();
+    });
+    document.getElementById('cr-import-file')?.addEventListener('change', importCrAgents);
+    document.getElementById('cr-clear-btn')?.addEventListener('click', clearCrAgents);
 
     // ===== END CONTROL ROOM =====
 
@@ -3513,6 +4173,17 @@ pollQuackInbox();`;
 
     document.getElementById('cowork-modal').addEventListener('click', (e) => {
       if (e.target.id === 'cowork-modal') closeCoWorkModal();
+    });
+
+    // Close Control Room modals on overlay click
+    document.getElementById('send-quack-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'send-quack-modal') closeSendQuackModal();
+    });
+    document.getElementById('test-agent-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'test-agent-modal') closeTestAgentModal();
+    });
+    document.getElementById('cr-settings-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'cr-settings-modal') closeCrSettings();
     });
 
     // ============== Settings / BYOK ==============
