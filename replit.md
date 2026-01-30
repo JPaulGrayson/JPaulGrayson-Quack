@@ -7,6 +7,7 @@ Quack is an agent-to-agent messaging relay system designed to facilitate communi
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (January 2026)
+- **Jan 30**: Enhanced Control Room with action buttons (Send Quack, New Workflow, Analyze Code, Run Template, Refresh All, Test Agent), stats bar (Inboxes, Messages, Pending, In Progress), sub-tabs (Inboxes, Quack Widget, Audit Trail, Agents, Threads), and Settings modal with auto-refresh/default layout options
 - **Jan 30**: Added Control Room feature for managing and launching multiple Replit agent windows in tiled layouts
 - **Jan 29**: Added embeddable widget (`quack-widget.js`) with auto-polling, approve/reject buttons, dark/light themes, and event callbacks
 - **Jan 29**: Created AI Agents documentation page (`/agents.html`) - login-free API reference for AI models
